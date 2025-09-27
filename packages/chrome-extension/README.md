@@ -115,9 +115,9 @@ This Chrome extension is part of the Claude Context monorepo. Please see:
 
 ## Related Packages
 
-- **[@zilliz/claude-context-core](../core)** - Core indexing engine used by this extension
-- **[@zilliz/claude-context-vscode-extension](../vscode-extension)** - VSCode integration
-- **[@zilliz/claude-context-mcp](../mcp)** - MCP server integration
+- **[@ayaka209/claude-context-core](../core)** - Core indexing engine used by this extension
+- **[@ayaka209/claude-context-vscode-extension](../vscode-extension)** - VSCode integration
+- **[@ayaka209/claude-context-mcp](../mcp)** - MCP server integration
 
 ## Tech Stack
 

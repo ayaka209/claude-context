@@ -31,7 +31,7 @@ OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 如果需要其他维度，可以在代码中直接配置：
 
 ```typescript
-import { OpenAIEmbedding } from '@zilliz/claude-context-core';
+import { OpenAIEmbedding } from '@ayaka209/claude-context-core';
 
 // 创建自定义维度的嵌入实例
 const embedding = new OpenAIEmbedding({

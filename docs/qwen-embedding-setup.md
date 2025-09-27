@@ -107,10 +107,10 @@ Qwen嵌入模型需要兼容OpenAI嵌入API格式的端点。确保您的API端�
 
 ```bash
 # 使用npx直接运行（推荐）
-npx @zilliz/claude-context-mcp@latest
+npx @ayaka209/claude-context-mcp@latest
 
 # 或者先安装再运行
-npm install -g @zilliz/claude-context-mcp
+npm install -g @ayaka209/claude-context-mcp
 claude-context-mcp
 ```
 

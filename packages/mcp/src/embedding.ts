@@ -1,4 +1,4 @@
-import { OpenAIEmbedding, AzureOpenAIEmbedding, VoyageAIEmbedding, GeminiEmbedding, OllamaEmbedding } from "@zilliz/claude-context-core";
+import { OpenAIEmbedding, AzureOpenAIEmbedding, VoyageAIEmbedding, GeminiEmbedding, OllamaEmbedding } from "@ayaka209/claude-context-core";
 import { ContextMcpConfig } from "./config.js";
 
 // Helper function to create embedding instance based on provider

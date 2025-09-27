@@ -1,7 +1,7 @@
 {
-    "name": "@zilliz/claude-context-core",
-    "version": "0.1.3",
-    "description": "Core indexing engine for Claude Context",
+    "name": "@ayaka209/claude-context-core",
+    "version": "0.2.0",
+    "description": "Enhanced core indexing engine for Claude Context with advanced embedding support",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -49,7 +49,7 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/zilliztech/claude-context.git",
+        "url": "https://github.com/ayaka209/claude-context.git",
         "directory": "packages/core"
     },
     "license": "MIT",

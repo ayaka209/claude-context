@@ -350,7 +350,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             throw new Error('MilvusClient is not initialized after ensureInitialized().');
         }
 
-        console.log('Inserting documents into collection:', collectionName);
+        console.log(`[MilvusDB] 📥 Inserting ${documents.length} documents into collection: ${collectionName}`);
         const data = documents.map(doc => ({
             id: doc.id,
             vector: doc.vector,
@@ -362,10 +362,22 @@ export class MilvusVectorDatabase implements VectorDatabase {
             metadata: JSON.stringify(doc.metadata),
         }));
 
-        await this.client.insert({
-            collection_name: collectionName,
-            data: data,
-        });
+        try {
+            const result = await this.client.insert({
+                collection_name: collectionName,
+                data: data,
+            });
+
+            // Check if insertion was successful
+            if (result.status?.error_code !== 'Success' && result.status?.error_code !== 0) {
+                throw new Error(`Vector database insert failed: ${result.status?.reason || 'Unknown error'}`);
+            }
+
+            console.log(`[MilvusDB] ✅ Successfully inserted ${documents.length} documents`);
+        } catch (error) {
+            console.error(`[MilvusDB] ❌ Failed to insert documents into collection ${collectionName}:`, error);
+            throw new Error(`Vector database insert failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 
     async search(collectionName: string, queryVector: number[], options?: SearchOptions): Promise<VectorSearchResult[]> {
@@ -593,6 +605,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             throw new Error('MilvusClient is not initialized after ensureInitialized().');
         }
 
+        console.log(`[MilvusDB] 📥 Inserting ${documents.length} hybrid documents into collection: ${collectionName}`);
         const data = documents.map(doc => ({
             id: doc.id,
             content: doc.content,
@@ -604,10 +617,22 @@ export class MilvusVectorDatabase implements VectorDatabase {
             metadata: JSON.stringify(doc.metadata),
         }));
 
-        await this.client.insert({
-            collection_name: collectionName,
-            data: data,
-        });
+        try {
+            const result = await this.client.insert({
+                collection_name: collectionName,
+                data: data,
+            });
+
+            // Check if insertion was successful
+            if (result.status?.error_code !== 'Success' && result.status?.error_code !== 0) {
+                throw new Error(`Vector database hybrid insert failed: ${result.status?.reason || 'Unknown error'}`);
+            }
+
+            console.log(`[MilvusDB] ✅ Successfully inserted ${documents.length} hybrid documents`);
+        } catch (error) {
+            console.error(`[MilvusDB] ❌ Failed to insert hybrid documents into collection ${collectionName}:`, error);
+            throw new Error(`Vector database hybrid insert failed: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 
     async hybridSearch(collectionName: string, searchRequests: HybridSearchRequest[], options?: HybridSearchOptions): Promise<HybridSearchResult[]> {

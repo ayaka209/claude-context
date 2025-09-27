@@ -171,7 +171,7 @@ export class OpenAIEmbedding extends Embedding {
 
         // For custom models, return the current dimension
         // Note: This may be incorrect until detectDimension() is called
-        console.warn(`[OpenAIEmbedding] ⚠️ getDimension() called for custom model '${model}' - returning ${this.dimension}. Call detectDimension() first for accurate dimension.`);
+        console.warn(`[OpenAIEmbedding] getDimension() called for custom model '${model}' - returning ${this.dimension}. Call detectDimension() first for accurate dimension.`);
         return this.dimension;
     }
 

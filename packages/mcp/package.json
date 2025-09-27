@@ -1,6 +1,6 @@
 {
     "name": "@ayaka209/claude-context-mcp",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Enhanced Model Context Protocol integration for Claude Context with external project management",
     "type": "module",
     "main": "dist/index.js",

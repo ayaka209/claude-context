@@ -192,7 +192,7 @@ export class AzureOpenAIEmbedding extends Embedding {
         
         // For custom deployments, return the current dimension
         // Note: This may be incorrect until detectDimension() is called
-        console.warn(`[AzureOpenAIEmbedding] ⚠️ getDimension() called for deployment '${this.config.deploymentName}' - returning ${this.dimension}. Call detectDimension() first for accurate dimension.`);
+        console.warn(`[AzureOpenAIEmbedding] getDimension() called for deployment '${this.config.deploymentName}' - returning ${this.dimension}. Call detectDimension() first for accurate dimension.`);
         return this.dimension;
     }
 

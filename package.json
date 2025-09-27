@@ -1,6 +1,6 @@
 {
     "name": "@ayaka209/claude-context",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Enhanced semantic code search with advanced embedding support and external project management",
     "private": true,
     "scripts": {
@@ -30,7 +30,8 @@
         "test:custom:shell": "bash scripts/test-custom-embedding.sh",
         "test:v4-2048": "node scripts/test-text-embedding-v4-2048.js",
         "index:project": "node scripts/index-project.js",
-        "check:index": "node scripts/check-index-status.js"
+        "check:index": "node scripts/check-index-status.js",
+        "check:milvus": "node scripts/check-milvus-collections.js"
     },
     "devDependencies": {
         "@types/node": "^20.0.0",
@@ -52,10 +53,18 @@
         "node": ">=20.0.0",
         "pnpm": ">=10.0.0"
     },
+    "license": "MIT",
+    "author": "ayaka209",
     "repository": {
         "type": "git",
         "url": "https://github.com/ayaka209/claude-context.git"
     },
-    "license": "MIT",
-    "author": "ayaka209"
+    "homepage": "https://github.com/ayaka209/claude-context#readme",
+    "bugs": {
+        "url": "https://github.com/ayaka209/claude-context/issues"
+    },
+    "keywords": ["claude", "context", "semantic-search", "mcp", "vector-database", "ai", "code-search", "fork"],
+    "dependencies": {
+        "dotenv": "^16.5.0"
+    }
 }

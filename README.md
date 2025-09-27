@@ -1,3 +1,24 @@
+# ⚠️ **COMMUNITY FORK NOTICE**
+
+> **THIS IS NOT THE OFFICIAL CLAUDE CONTEXT REPOSITORY**
+>
+> This is a **community fork** building upon the excellent work of the original Zilliz team. We have deep respect for the original authors and this fork exists to experiment with additional features while we await upstream integration.
+>
+> **🙏 Please support the official version first**: [zilliztech/claude-context](https://github.com/zilliztech/claude-context)
+>
+> **About this fork:**
+> - **Namespace**: Published under `@ayaka209/*` to avoid conflicts with official packages
+> - **Purpose**: Experimental features and community contributions integration
+> - **Status**: Community-maintained with merged PRs from various contributors
+> - **Compatibility**: Not compatible with official version due to namespace differences
+> - **Recommendation**: Use official version unless you specifically need experimental features
+>
+> **🤝 Community contributions**: This fork integrates pull requests and improvements from various community members who have contributed to the Claude Context ecosystem. We are grateful for their work and hope these features will eventually benefit the official repository.
+>
+> **⚠️ No affiliation**: This fork is **NOT affiliated with, endorsed by, or connected to** the original Zilliz team or authors. We are independent community maintainers.
+
+---
+
 ![](assets/claude-context.png)
 
 ### Your entire codebase as Claude's context
@@ -11,15 +32,19 @@
 
 **Claude Context** is an enhanced MCP plugin that adds semantic code search to Claude Code and other AI coding agents, giving them deep context from your entire codebase.
 
-## ✨ What's New
+## 🧪 Experimental Features in This Fork
 
-🎯 **Advanced Embedding Support**: Enhanced OpenAI embedding integration with support for custom dimensions and the latest `text-embedding-v4` model (2048 dimensions by default)
+> **Note**: These are experimental additions to the original project. For stable production use, please consider the official version.
 
-🧪 **Comprehensive Testing Suite**: Built-in tools to test embedding model availability and validate custom configurations across different providers
+🎯 **Embedding Model Enhancements**: Additional support for custom dimensions and `text-embedding-v4` model (merged from community PRs)
 
-🔧 **External Project Management**: Command-line tools for indexing projects externally with flexible configuration options and progress monitoring
+🧪 **Testing and Validation Tools**: Community-contributed tools for testing embedding model availability across different providers
 
-📊 **Real-time Progress Tracking**: Monitor indexing progress across multiple projects with detailed status reporting and watch modes
+🔧 **External Project Management**: Experimental command-line tools for managing projects outside the main workflow
+
+📊 **Progress Monitoring**: Real-time indexing progress tracking with detailed status reporting
+
+**Disclaimer**: These features are experimental and may have bugs. They represent community contributions and testing grounds for potential upstream integration.
 
 ## 🚀 Key Features
 
@@ -825,6 +850,42 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] Enhanced code chunking strategies
 - [ ] Search result ranking optimization
 - [ ] Robust Chrome Extension
+
+---
+
+## 🙏 Credits and Acknowledgments
+
+This fork is built entirely upon the outstanding foundation created by the Zilliz team. We have deep gratitude for their innovative work that made Claude Context possible.
+
+### 🌟 Original Creators
+
+**All credit goes to the original Zilliz team who created this project:**
+
+- **[Zilliz Team](https://github.com/zilliztech)** - Original creators and maintainers
+- **[Filip Haltmayer](https://github.com/filip-halt)** - Core developer and architect
+- **[Yujian Tang](https://github.com/Yujian-Tang)** - Technical lead and vector database integration
+- **[Stephen Batifol](https://github.com/stephen-batifol)** - MCP protocol implementation and AI agent integration
+
+**Official Repository** (Please star and support!): [zilliztech/claude-context](https://github.com/zilliztech/claude-context)
+
+> **⚠️ Important**: This fork is **NOT affiliated with, endorsed by, or connected to** the original authors or Zilliz team. We are independent community maintainers working with publicly available code under the MIT license.
+
+### 🤝 Community Contributors
+
+This fork exists to aggregate and test community contributions while we hope for upstream integration. We are grateful to all community members who have submitted pull requests, reported issues, and suggested improvements to the Claude Context ecosystem.
+
+**Note**: Many features in this fork originated from community pull requests and discussions in the original repository. We serve as a testing ground for experimental features that we hope will eventually benefit the official project.
+
+### 🔧 Experimental Features
+
+This fork includes some experimental additions (with great caution and respect for the original design):
+
+- Enhanced embedding model support and testing tools
+- Community-requested external project management features
+- Additional error handling and verification systems
+- Integration of various community pull requests
+
+**Disclaimer**: These are experimental features and should be considered unstable. For production use, we strongly recommend the official version.
 
 ---
 

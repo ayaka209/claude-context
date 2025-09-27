@@ -83,7 +83,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
 
         this.baseUrl = processedAddress.replace(/\/$/, '') + '/v2/vectordb';
 
-        console.log(`🔌 Connecting to Milvus REST API at: ${processedAddress}`);
+        console.log(`Connecting to Milvus REST API at: ${processedAddress}`);
     }
 
     /**
@@ -133,7 +133,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
                 await this.loadCollection(collectionName);
             }
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to ensure collection '${collectionName}' is loaded:`, error);
+            console.error(`[MilvusRestfulDB] Failed to ensure collection '${collectionName}' is loaded:`, error);
             throw error;
         }
     }
@@ -264,7 +264,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             await this.loadCollection(collectionName);
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to create collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to create collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -290,7 +290,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
 
             await this.makeRequest('/indexes/create', 'POST', indexParams);
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to create index for collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to create index for collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -306,7 +306,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
                 dbName: restfulConfig.database
             });
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to load collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to load collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -321,7 +321,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
                 dbName: restfulConfig.database
             });
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to drop collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to drop collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -339,7 +339,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             const exists = response.data?.has || false;
             return exists;
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to check collection '${collectionName}' existence:`, error);
+            console.error(`[MilvusRestfulDB] Failed to check collection '${collectionName}' existence:`, error);
             throw error;
         }
     }
@@ -355,7 +355,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
 
             return response.data || [];
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to list collections:`, error);
+            console.error(`[MilvusRestfulDB] Failed to list collections:`, error);
             throw error;
         }
     }
@@ -387,7 +387,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             await this.makeRequest('/entities/insert', 'POST', insertRequest);
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to insert documents into collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to insert documents into collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -457,7 +457,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             return results;
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to search in collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to search in collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -481,7 +481,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             await this.makeRequest('/entities/delete', 'POST', deleteRequest);
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to delete documents from collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to delete documents from collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -510,7 +510,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             return response.data || [];
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to query collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to query collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -605,7 +605,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             await this.loadCollection(collectionName);
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to create hybrid collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to create hybrid collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -645,7 +645,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             await this.makeRequest('/indexes/create', 'POST', sparseIndexParams);
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to create hybrid indexes for collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to create hybrid indexes for collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -681,7 +681,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             }
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to insert hybrid documents to collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to insert hybrid documents to collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -763,7 +763,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             }
 
             const results = response.data || [];
-            console.log(`[MilvusRestfulDB] ✅ Found ${results.length} results from hybrid search`);
+            console.log(`[MilvusRestfulDB] Found ${results.length} results from hybrid search`);
 
             // Transform response to HybridSearchResult format
             return results.map((result: any) => ({
@@ -782,7 +782,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
             }));
 
         } catch (error) {
-            console.error(`[MilvusRestfulDB] ❌ Failed to perform hybrid search on collection '${collectionName}':`, error);
+            console.error(`[MilvusRestfulDB] Failed to perform hybrid search on collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -795,7 +795,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
     async checkCollectionLimit(): Promise<boolean> {
         // TODO: Implement REST API version of collection limit checking
         // For now, always return true to maintain compatibility
-        console.warn('[MilvusRestfulDB] ⚠️  checkCollectionLimit not implemented for REST API - returning true');
+        console.warn('[MilvusRestfulDB]  checkCollectionLimit not implemented for REST API - returning true');
         return true;
     }
 }

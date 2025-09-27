@@ -39,7 +39,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
 
     private async initializeClient(address: string): Promise<void> {
         const milvusConfig = this.config as MilvusConfig;
-        console.log('🔌 Connecting to vector database at: ', address);
+        console.log('Connecting to vector database at: ', address);
         this.client = new MilvusClient({
             address: address,
             username: milvusConfig.username,
@@ -99,7 +99,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 });
             }
         } catch (error) {
-            console.error(`[MilvusDB] ❌ Failed to ensure collection '${collectionName}' is loaded:`, error);
+            console.error(`[MilvusDB] Failed to ensure collection '${collectionName}' is loaded:`, error);
             throw error;
         }
     }
@@ -138,7 +138,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
 
                 // Check if index building is complete
                 if (indexBuildProgress.indexed_rows === indexBuildProgress.total_rows) {
-                    console.log(`[MilvusDB] ✅ Index on field '${fieldName}' is ready! (${indexBuildProgress.indexed_rows}/${indexBuildProgress.total_rows} rows indexed)`);
+                    console.log(`[MilvusDB] Index on field '${fieldName}' is ready! (${indexBuildProgress.indexed_rows}/${indexBuildProgress.total_rows} rows indexed)`);
                     return;
                 }
 
@@ -146,8 +146,8 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 if (indexBuildProgress.status && indexBuildProgress.status.error_code !== 'Success') {
                     // Handle known issue with older Milvus versions where sparse vector index progress returns incorrect error
                     if (indexBuildProgress.status.reason && indexBuildProgress.status.reason.includes('index duplicates[indexName=]')) {
-                        console.log(`[MilvusDB] ⚠️  Index progress check returned known older Milvus issue: ${indexBuildProgress.status.reason}`);
-                        console.log(`[MilvusDB] ⚠️  This is a known issue with older Milvus versions - treating as index ready`);
+                        console.log(`[MilvusDB] Warning: Index progress check returned known older Milvus issue: ${indexBuildProgress.status.reason}`);
+                        console.log(`[MilvusDB] Warning: This is a known issue with older Milvus versions - treating as index ready`);
                         return; // Treat as ready since this is a false error
                     }
                     throw new Error(`Index creation failed for field '${fieldName}' in collection '${collectionName}': ${indexBuildProgress.status.reason}`);
@@ -160,7 +160,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 interval = Math.min(interval * backoffMultiplier, maxInterval);
 
             } catch (error) {
-                console.error(`[MilvusDB] ❌ Error checking index build progress for field '${fieldName}':`, error);
+                console.error(`[MilvusDB] Error checking index build progress for field '${fieldName}':`, error);
                 throw error;
             }
         }
@@ -193,11 +193,11 @@ export class MilvusVectorDatabase implements VectorDatabase {
                     collection_name: collectionName,
                 });
 
-                console.log(`[MilvusDB] ✅ Collection '${collectionName}' loaded successfully!`);
+                console.log(`[MilvusDB] Collection '${collectionName}' loaded successfully!`);
                 return;
 
             } catch (error) {
-                console.error(`[MilvusDB] ❌ Failed to load collection '${collectionName}' on attempt ${attempt}:`, error);
+                console.error(`[MilvusDB] Failed to load collection '${collectionName}' on attempt ${attempt}:`, error);
 
                 if (attempt === maxRetries) {
                     throw new Error(`Failed to load collection '${collectionName}' after ${maxRetries} attempts: ${error}`);
@@ -350,7 +350,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             throw new Error('MilvusClient is not initialized after ensureInitialized().');
         }
 
-        console.log(`[MilvusDB] 📥 Inserting ${documents.length} documents into collection: ${collectionName}`);
+        console.log(`[MilvusDB] Inserting ${documents.length} documents into collection: ${collectionName}`);
         const data = documents.map(doc => ({
             id: doc.id,
             vector: doc.vector,
@@ -373,9 +373,13 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 throw new Error(`Vector database insert failed: ${result.status?.reason || 'Unknown error'}`);
             }
 
-            console.log(`[MilvusDB] ✅ Successfully inserted ${documents.length} documents`);
+            console.log(`[MilvusDB] Successfully inserted ${documents.length} documents`);
+
+            // 验证步骤：插入后立即查询验证数据是否写入成功
+            await this.verifyInsertedData(collectionName, documents.length);
+
         } catch (error) {
-            console.error(`[MilvusDB] ❌ Failed to insert documents into collection ${collectionName}:`, error);
+            console.error(`[MilvusDB] Failed to insert documents into collection ${collectionName}:`, error);
             throw new Error(`Vector database insert failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
@@ -466,7 +470,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
 
             return result.data || [];
         } catch (error) {
-            console.error(`[MilvusDB] ❌ Failed to query collection '${collectionName}':`, error);
+            console.error(`[MilvusDB] Failed to query collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -605,7 +609,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             throw new Error('MilvusClient is not initialized after ensureInitialized().');
         }
 
-        console.log(`[MilvusDB] 📥 Inserting ${documents.length} hybrid documents into collection: ${collectionName}`);
+        console.log(`[MilvusDB] Inserting ${documents.length} hybrid documents into collection: ${collectionName}`);
         const data = documents.map(doc => ({
             id: doc.id,
             content: doc.content,
@@ -628,9 +632,13 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 throw new Error(`Vector database hybrid insert failed: ${result.status?.reason || 'Unknown error'}`);
             }
 
-            console.log(`[MilvusDB] ✅ Successfully inserted ${documents.length} hybrid documents`);
+            console.log(`[MilvusDB] Successfully inserted ${documents.length} hybrid documents`);
+
+            // 验证步骤：插入后立即查询验证数据是否写入成功
+            await this.verifyInsertedData(collectionName, documents.length);
+
         } catch (error) {
-            console.error(`[MilvusDB] ❌ Failed to insert hybrid documents into collection ${collectionName}:`, error);
+            console.error(`[MilvusDB] Failed to insert hybrid documents into collection ${collectionName}:`, error);
             throw new Error(`Vector database hybrid insert failed: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
@@ -645,7 +653,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
 
         try {
             // Generate OpenAI embedding for the first search request (dense)
-            console.log(`[MilvusDB] 🔍 Preparing hybrid search for collection: ${collectionName}`);
+            console.log(`[MilvusDB] Preparing hybrid search for collection: ${collectionName}`);
 
             // Prepare search requests in the correct Milvus format
             const search_param_1 = {
@@ -670,19 +678,19 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 }
             };
 
-            console.log(`[MilvusDB] 🔍 Dense search params:`, JSON.stringify({
+            console.log(`[MilvusDB] Dense search params:`, JSON.stringify({
                 anns_field: search_param_1.anns_field,
                 param: search_param_1.param,
                 limit: search_param_1.limit,
                 data_length: Array.isArray(search_param_1.data[0]) ? search_param_1.data[0].length : 'N/A'
             }, null, 2));
-            console.log(`[MilvusDB] 🔍 Sparse search params:`, JSON.stringify({
+            console.log(`[MilvusDB] Sparse search params:`, JSON.stringify({
                 anns_field: search_param_2.anns_field,
                 param: search_param_2.param,
                 limit: search_param_2.limit,
                 query_text: typeof search_param_2.data === 'string' ? search_param_2.data.substring(0, 50) + '...' : 'N/A'
             }, null, 2));
-            console.log(`[MilvusDB] 🔍 Rerank strategy:`, JSON.stringify(rerank_strategy, null, 2));
+            console.log(`[MilvusDB] Rerank strategy:`, JSON.stringify(rerank_strategy, null, 2));
 
             // Execute hybrid search using the correct client.search format
             const searchParams: any = {
@@ -697,7 +705,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 searchParams.expr = options.filterExpr;
             }
 
-            console.log(`[MilvusDB] 🔍 Complete search request:`, JSON.stringify({
+            console.log(`[MilvusDB] Complete search request:`, JSON.stringify({
                 collection_name: searchParams.collection_name,
                 data_count: searchParams.data.length,
                 limit: searchParams.limit,
@@ -708,14 +716,14 @@ export class MilvusVectorDatabase implements VectorDatabase {
 
             const searchResult = await this.client.search(searchParams);
 
-            console.log(`[MilvusDB] 🔍 Search executed, processing results...`);
+            console.log(`[MilvusDB] Search executed, processing results...`);
 
             if (!searchResult.results || searchResult.results.length === 0) {
-                console.log(`[MilvusDB] ⚠️  No results returned from Milvus search`);
+                console.log(`[MilvusDB] Warning: No results returned from Milvus search`);
                 return [];
             }
 
-            console.log(`[MilvusDB] ✅ Found ${searchResult.results.length} results from hybrid search`);
+            console.log(`[MilvusDB] Found ${searchResult.results.length} results from hybrid search`);
 
             // Transform results to HybridSearchResult format
             return searchResult.results.map((result: any) => ({
@@ -734,7 +742,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             }));
 
         } catch (error) {
-            console.error(`[MilvusDB] ❌ Failed to perform hybrid search on collection '${collectionName}':`, error);
+            console.error(`[MilvusDB] Failed to perform hybrid search on collection '${collectionName}':`, error);
             throw error;
         }
     }
@@ -785,6 +793,35 @@ export class MilvusVectorDatabase implements VectorDatabase {
             }
             // Re-throw other errors as-is
             throw error;
+        }
+    }
+
+    /**
+     * 验证插入的数据是否成功写入
+     * @param collectionName 集合名称
+     * @param expectedCount 预期插入的数据条数
+     */
+    private async verifyInsertedData(collectionName: string, expectedCount: number): Promise<void> {
+        try {
+            // 等待一小段时间让数据完全写入
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // 查询数据验证写入
+            const queryResult = await this.query(collectionName, '', ['id'], Math.min(expectedCount + 10, 100));
+
+            console.log(`[MilvusDB] Verification: Expected ${expectedCount}, Found ${queryResult.length} documents`);
+
+            if (queryResult.length === 0) {
+                console.warn(`[MilvusDB] Warning: No documents found after insertion verification`);
+            } else if (queryResult.length < expectedCount * 0.8) {
+                console.warn(`[MilvusDB] Warning: Only ${queryResult.length}/${expectedCount} documents verified (${(queryResult.length/expectedCount*100).toFixed(1)}%)`);
+            } else {
+                console.log(`[MilvusDB] Verification successful: ${queryResult.length} documents confirmed`);
+            }
+
+        } catch (error) {
+            console.warn(`[MilvusDB] Verification failed (non-critical):`, error instanceof Error ? error.message : String(error));
+            // 验证失败不中断流程，只是警告
         }
     }
 }

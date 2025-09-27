@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      dotenv:
+        specifier: ^16.5.0
+        version: 16.5.0
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -53,7 +57,7 @@ importers:
 
   examples/basic-usage:
     dependencies:
-      '@zilliz/claude-context-core':
+      '@ayaka209/claude-context-core':
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
@@ -72,7 +76,7 @@ importers:
 
   packages/chrome-extension:
     dependencies:
-      '@zilliz/claude-context-core':
+      '@ayaka209/claude-context-core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -227,12 +231,12 @@ importers:
 
   packages/mcp:
     dependencies:
+      '@ayaka209/claude-context-core':
+        specifier: workspace:*
+        version: link:../core
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.1
         version: 1.12.1
-      '@zilliz/claude-context-core':
-        specifier: workspace:*
-        version: link:../core
       zod:
         specifier: ^3.25.55
         version: 3.25.55
@@ -249,7 +253,7 @@ importers:
 
   packages/vscode-extension:
     dependencies:
-      '@zilliz/claude-context-core':
+      '@ayaka209/claude-context-core':
         specifier: workspace:*
         version: link:../core
       web-tree-sitter:

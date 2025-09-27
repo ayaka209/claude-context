@@ -5,6 +5,7 @@ export interface OpenAIEmbeddingConfig {
     model: string;
     apiKey: string;
     baseURL?: string; // OpenAI supports custom baseURL
+    dimensions?: number; // Custom dimensions for models that support it (e.g., text-embedding-v4)
 }
 
 export class OpenAIEmbedding extends Embedding {
@@ -30,11 +31,12 @@ export class OpenAIEmbedding extends Embedding {
         const modelInfo = supportedModels[model];
 
         if (modelInfo) {
-            this.dimension = modelInfo.dimension;
+            // Use custom dimensions if specified, otherwise use model default
+            this.dimension = this.config.dimensions || modelInfo.dimension;
             this.maxTokens = modelInfo.contextLength;
         } else {
-            // Use default dimension and context length for unknown models
-            this.dimension = 1536;
+            // Use custom dimensions if specified, otherwise use default
+            this.dimension = this.config.dimensions || 1536;
             this.maxTokens = 8192;
         }
     }
@@ -42,6 +44,11 @@ export class OpenAIEmbedding extends Embedding {
     async detectDimension(testText: string = "test"): Promise<number> {
         const model = this.config.model || 'text-embedding-3-small';
         const knownModels = OpenAIEmbedding.getSupportedModels();
+
+        // If custom dimensions specified, use that
+        if (this.config.dimensions) {
+            return this.config.dimensions;
+        }
 
         // Use known dimension for standard models
         if (knownModels[model]) {
@@ -51,11 +58,18 @@ export class OpenAIEmbedding extends Embedding {
         // For custom models, make API call to detect dimension
         try {
             const processedText = this.preprocessText(testText);
-            const response = await this.client.embeddings.create({
+            const embedRequest: any = {
                 model: model,
                 input: processedText,
                 encoding_format: 'float',
-            });
+            };
+
+            // Add dimensions parameter if specified (for models that support it like text-embedding-v4)
+            if (this.config.dimensions) {
+                embedRequest.dimensions = this.config.dimensions;
+            }
+
+            const response = await this.client.embeddings.create(embedRequest);
             return response.data[0].embedding.length;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -82,11 +96,18 @@ export class OpenAIEmbedding extends Embedding {
         }
 
         try {
-            const response = await this.client.embeddings.create({
+            const embedRequest: any = {
                 model: model,
                 input: processedText,
                 encoding_format: 'float',
-            });
+            };
+
+            // Add dimensions parameter if specified (for models that support it like text-embedding-v4)
+            if (this.config.dimensions) {
+                embedRequest.dimensions = this.config.dimensions;
+            }
+
+            const response = await this.client.embeddings.create(embedRequest);
 
             // Update dimension from actual response
             this.dimension = response.data[0].embedding.length;
@@ -113,11 +134,18 @@ export class OpenAIEmbedding extends Embedding {
         }
 
         try {
-            const response = await this.client.embeddings.create({
+            const embedRequest: any = {
                 model: model,
                 input: processedTexts,
                 encoding_format: 'float',
-            });
+            };
+
+            // Add dimensions parameter if specified (for models that support it like text-embedding-v4)
+            if (this.config.dimensions) {
+                embedRequest.dimensions = this.config.dimensions;
+            }
+
+            const response = await this.client.embeddings.create(embedRequest);
 
             this.dimension = response.data[0].embedding.length;
 
@@ -209,6 +237,11 @@ export class OpenAIEmbedding extends Embedding {
                 dimension: 1024,
                 contextLength: 32000,
                 description: 'Qwen3 0.6B embedding model with 1024 dimensions (32k context)'
+            },
+            'text-embedding-v4': {
+                dimension: 2048,
+                contextLength: 32000,
+                description: 'Qwen text-embedding-v4 model with 2048 dimensions (supports custom dimensions via MRL)'
             }
         };
     }

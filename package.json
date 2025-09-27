@@ -20,7 +20,16 @@
         "release:mcp": "pnpm --filter @zilliz/claude-context-mcp... run build && pnpm --filter @zilliz/claude-context-mcp publish --access public --no-git-checks",
         "release:vscode": "pnpm --filter @zilliz/claude-context-core build && pnpm --filter semanticcodesearch run webpack && pnpm --filter semanticcodesearch release",
         "example:basic": "pnpm --filter claude-context-basic-example start",
-        "benchmark": "node scripts/build-benchmark.js"
+        "benchmark": "node scripts/build-benchmark.js",
+        "test:embedding": "node scripts/test-embedding.js",
+        "test:embedding:quick": "bash scripts/test-embedding.sh",
+        "test:embedding:full": "bash scripts/test-embedding.sh --full-test",
+        "test:embedding:template": "bash scripts/test-embedding.sh --template",
+        "test:custom": "node scripts/test-custom-embedding.js",
+        "test:custom:shell": "bash scripts/test-custom-embedding.sh",
+        "test:v4-2048": "node scripts/test-text-embedding-v4-2048.js",
+        "index:project": "node scripts/index-project.js",
+        "check:index": "node scripts/check-index-status.js"
     },
     "devDependencies": {
         "@types/node": "^20.0.0",

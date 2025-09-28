@@ -1,6 +1,6 @@
 {
     "name": "@ayaka209/claude-context",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "Enhanced semantic code search with advanced embedding support and external project management",
     "private": true,
     "scripts": {

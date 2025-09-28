@@ -71,18 +71,19 @@ export class OpenAIEmbedding extends Embedding {
 
             const response = await this.client.embeddings.create(embedRequest);
 
-            // Handle different response formats (OpenAI vs Alibaba Cloud/DashScope)
+            // Handle different response formats (OpenAI vs DashScope)
             const firstItem = response.data[0];
-            const isAlibaba = this.config.baseURL?.includes('dashscope.aliyuncs.com');
+            const modelConfig = knownModels[model] as { dimension: number; contextLength: number; description: string; isDashScope?: boolean; maxBatchSize?: number } | undefined;
+            const isDashScopeModel = modelConfig?.isDashScope === true;
 
-            if (isAlibaba && (firstItem as any).vector) {
-                // Alibaba Cloud/DashScope format: { data: [{ vector: [...] }] }
+            if (isDashScopeModel && (firstItem as any).vector) {
+                // DashScope format: { data: [{ vector: [...] }] }
                 return (firstItem as any).vector.length;
             } else if (firstItem.embedding) {
                 // Standard OpenAI format: { data: [{ embedding: [...] }] }
                 return firstItem.embedding.length;
             } else {
-                throw new Error(`Unexpected embedding response format: expected ${isAlibaba ? 'vector' : 'embedding'} field`);
+                throw new Error(`Unexpected embedding response format: expected ${isDashScopeModel ? 'vector' : 'embedding'} field`);
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -122,19 +123,20 @@ export class OpenAIEmbedding extends Embedding {
 
             const response = await this.client.embeddings.create(embedRequest);
 
-            // Handle different response formats (OpenAI vs Alibaba Cloud/DashScope)
+            // Handle different response formats (OpenAI vs DashScope)
             let embeddingVector: number[];
             const firstItem = response.data[0];
-            const isAlibaba = this.config.baseURL?.includes('dashscope.aliyuncs.com');
+            const modelConfig = knownModels[model] as { dimension: number; contextLength: number; description: string; isDashScope?: boolean; maxBatchSize?: number } | undefined;
+            const isDashScopeModel = modelConfig?.isDashScope === true;
 
-            if (isAlibaba && (firstItem as any).vector) {
-                // Alibaba Cloud/DashScope format: { data: [{ vector: [...] }] }
+            if (isDashScopeModel && (firstItem as any).vector) {
+                // DashScope format: { data: [{ vector: [...] }] }
                 embeddingVector = (firstItem as any).vector;
             } else if (firstItem.embedding) {
                 // Standard OpenAI format: { data: [{ embedding: [...] }] }
                 embeddingVector = firstItem.embedding;
             } else {
-                throw new Error(`Unexpected embedding response format: expected ${isAlibaba ? 'vector' : 'embedding'} field`);
+                throw new Error(`Unexpected embedding response format: expected ${isDashScopeModel ? 'vector' : 'embedding'} field`);
             }
 
             // Update dimension from actual response
@@ -151,25 +153,30 @@ export class OpenAIEmbedding extends Embedding {
     }
 
     async embedBatch(texts: string[]): Promise<EmbeddingVector[]> {
-        // Check for Alibaba Cloud/DashScope limitations
-        const isAlibaba = this.config.baseURL?.includes('dashscope.aliyuncs.com');
-        const maxBatchSize = isAlibaba ? 10 : texts.length; // Alibaba Cloud has a batch size limit of 10
+        // Check for DashScope models based on model configuration
+        const model = this.config.model || 'text-embedding-3-small';
+        const knownModels = OpenAIEmbedding.getSupportedModels();
+        const modelConfig = knownModels[model];
+        const isDashScopeModel = modelConfig?.isDashScope === true;
+        const maxBatchSize = modelConfig?.maxBatchSize || 1000; // Default large batch size for non-DashScope models
 
         if (texts.length > maxBatchSize) {
             // Split into smaller batches for providers with limitations
+            console.log(`[OpenAIEmbedding] Splitting ${texts.length} texts into batches of ${maxBatchSize}`);
             const results: EmbeddingVector[] = [];
             for (let i = 0; i < texts.length; i += maxBatchSize) {
                 const batch = texts.slice(i, i + maxBatchSize);
+                console.log(`[OpenAIEmbedding] Processing batch ${Math.floor(i/maxBatchSize) + 1}: ${batch.length} texts`);
                 const batchResults = await this.embedBatch(batch);
+                console.log(`[OpenAIEmbedding] Batch ${Math.floor(i/maxBatchSize) + 1} returned ${batchResults.length} embeddings`);
                 results.push(...batchResults);
             }
+            console.log(`[OpenAIEmbedding] Total: ${results.length} embeddings for ${texts.length} input texts`);
             return results;
         }
 
         const processedTexts = this.preprocessTexts(texts);
-        const model = this.config.model || 'text-embedding-3-small';
 
-        const knownModels = OpenAIEmbedding.getSupportedModels();
         if (knownModels[model] && this.dimension !== knownModels[model].dimension) {
             this.dimension = knownModels[model].dimension;
         } else if (!knownModels[model]) {
@@ -190,13 +197,12 @@ export class OpenAIEmbedding extends Embedding {
 
             const response = await this.client.embeddings.create(embedRequest);
 
-            // Handle different response formats (OpenAI vs Alibaba Cloud/DashScope)
+            // Handle different response formats (OpenAI vs DashScope)
             const firstItem = response.data[0];
-            const isAlibaba = this.config.baseURL?.includes('dashscope.aliyuncs.com');
             let embeddingVector: number[];
 
-            if (isAlibaba && (firstItem as any).vector) {
-                // Alibaba Cloud/DashScope format: { data: [{ vector: [...] }] }
+            if (isDashScopeModel && (firstItem as any).vector) {
+                // DashScope format: { data: [{ vector: [...] }] }
                 embeddingVector = (firstItem as any).vector;
                 this.dimension = embeddingVector.length;
 
@@ -214,7 +220,7 @@ export class OpenAIEmbedding extends Embedding {
                     dimension: this.dimension
                 }));
             } else {
-                throw new Error(`Unexpected embedding response format: expected ${isAlibaba ? 'vector' : 'embedding'} field`);
+                throw new Error(`Unexpected embedding response format: expected ${isDashScopeModel ? 'vector' : 'embedding'} field`);
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -269,7 +275,7 @@ export class OpenAIEmbedding extends Embedding {
     /**
      * Get list of supported models
      */
-    static getSupportedModels(): Record<string, { dimension: number; contextLength: number; description: string }> {
+    static getSupportedModels(): Record<string, { dimension: number; contextLength: number; description: string; isDashScope?: boolean; maxBatchSize?: number }> {
         return {
             'text-embedding-3-small': {
                 dimension: 1536,
@@ -302,9 +308,11 @@ export class OpenAIEmbedding extends Embedding {
                 description: 'Qwen3 0.6B embedding model with 1024 dimensions (32k context)'
             },
             'text-embedding-v4': {
-                dimension: 1024,
+                dimension: 2048, // Default dimension, can be customized via dimensions parameter
                 contextLength: 32000,
-                description: 'Qwen text-embedding-v4 model (Alibaba Cloud/DashScope) - 1024 dimensions, requires dashscope.aliyuncs.com baseURL'
+                description: 'Qwen text-embedding-v4 model (Alibaba Cloud/DashScope) - supports custom dimensions up to 2048',
+                isDashScope: true,
+                maxBatchSize: 10
             }
         };
     }

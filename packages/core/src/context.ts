@@ -875,11 +875,25 @@ export class Context {
         const chunkContents = chunks.map(chunk => chunk.content);
         const embeddings = await this.embedding.embedBatch(chunkContents);
 
+        // Validate embeddings match chunks
+        if (embeddings.length !== chunks.length) {
+            throw new Error(`Embedding count (${embeddings.length}) does not match chunk count (${chunks.length}). This indicates a problem with the embedding provider.`);
+        }
+
         if (isHybrid === true) {
             // Create hybrid vector documents
             const documents: VectorDocument[] = chunks.map((chunk, index) => {
                 if (!chunk.metadata.filePath) {
                     throw new Error(`Missing filePath in chunk metadata at index ${index}`);
+                }
+
+                // Validate embedding vector
+                const embedding = embeddings[index];
+                if (!embedding || !embedding.vector) {
+                    throw new Error(`Missing or invalid embedding at index ${index}: ${JSON.stringify(embedding)}`);
+                }
+                if (!Array.isArray(embedding.vector) || embedding.vector.length === 0) {
+                    throw new Error(`Invalid embedding vector at index ${index}: expected non-empty array, got ${typeof embedding.vector} with length ${embedding.vector?.length}`);
                 }
 
                 const relativePath = path.relative(codebasePath, chunk.metadata.filePath);
@@ -889,7 +903,7 @@ export class Context {
                 return {
                     id: this.generateId(relativePath, chunk.metadata.startLine || 0, chunk.metadata.endLine || 0, chunk.content),
                     content: chunk.content, // Full text content for BM25 and storage
-                    vector: embeddings[index].vector, // Dense vector
+                    vector: embedding.vector, // Dense vector
                     relativePath,
                     startLine: chunk.metadata.startLine || 0,
                     endLine: chunk.metadata.endLine || 0,

@@ -614,6 +614,35 @@ export class MilvusVectorDatabase implements VectorDatabase {
         }
 
         console.log(`[MilvusDB] Inserting ${documents.length} hybrid documents into collection: ${collectionName}`);
+
+        // Validate all documents have valid vectors
+        const invalidDocs = documents.filter((doc, index) => {
+            if (!doc.vector || !Array.isArray(doc.vector) || doc.vector.length === 0) {
+                console.error(`[MilvusDB] Invalid vector at document index ${index}: ${JSON.stringify({id: doc.id, vectorType: typeof doc.vector, vectorLength: doc.vector?.length})}`);
+                return true;
+            }
+
+            // Check for NaN or Infinity values in vector
+            const hasInvalidValues = doc.vector.some((val, valIndex) => {
+                if (typeof val !== 'number' || isNaN(val) || !isFinite(val)) {
+                    console.error(`[MilvusDB] Invalid vector value at doc ${index}, position ${valIndex}: ${val} (type: ${typeof val})`);
+                    return true;
+                }
+                return false;
+            });
+
+            if (hasInvalidValues) {
+                console.error(`[MilvusDB] Document ${index} has vector with invalid numeric values`);
+                return true;
+            }
+
+            return false;
+        });
+
+        if (invalidDocs.length > 0) {
+            throw new Error(`[MilvusDB] Found ${invalidDocs.length} documents with invalid vectors out of ${documents.length} total documents`);
+        }
+
         const data = documents.map(doc => ({
             id: doc.id,
             content: doc.content,
@@ -624,6 +653,12 @@ export class MilvusVectorDatabase implements VectorDatabase {
             fileExtension: doc.fileExtension,
             metadata: JSON.stringify(doc.metadata),
         }));
+
+        console.log(`[MilvusDB] Prepared ${data.length} data records for insertion`);
+        // Additional debug: check first few vectors
+        for (let i = 0; i < Math.min(3, data.length); i++) {
+            console.log(`[MilvusDB] Sample data[${i}]: id=${data[i].id}, vector length=${data[i].vector?.length}`);
+        }
 
         try {
             const result = await this.client.insert({

@@ -18,6 +18,7 @@ import {
 } from './vectordb';
 import { SemanticSearchResult } from './types';
 import { envManager } from './utils/env-manager';
+import { IndexLogger } from './utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -102,6 +103,7 @@ export class Context {
     private codeSplitter: Splitter;
     private supportedExtensions: string[];
     private ignorePatterns: string[];
+    private logger?: IndexLogger;
     private synchronizers = new Map<string, FileSynchronizer>();
 
     constructor(config: ContextConfig = {}) {
@@ -270,65 +272,99 @@ export class Context {
         progressCallback?: (progress: { phase: string; current: number; total: number; percentage: number }) => void,
         forceReindex: boolean = false
     ): Promise<{ indexedFiles: number; totalChunks: number; status: 'completed' | 'limit_reached' }> {
+        // Initialize logger for this indexing session
+        this.logger = new IndexLogger(codebasePath);
+
         const isHybrid = this.getIsHybrid();
         const searchType = isHybrid === true ? 'hybrid search' : 'semantic search';
-        console.log(`[Context] Starting to index codebase with ${searchType}: ${codebasePath}`);
-
-        // 1. Load ignore patterns from various ignore files
-        await this.loadIgnorePatterns(codebasePath);
-
-        // 2. Check and prepare vector collection
-        progressCallback?.({ phase: 'Preparing collection...', current: 0, total: 100, percentage: 0 });
-        console.log(`Debug2: Preparing vector collection for codebase${forceReindex ? ' (FORCE REINDEX)' : ''}`);
-        await this.prepareCollection(codebasePath, forceReindex);
-
-        // 3. Recursively traverse codebase to get all supported files
-        progressCallback?.({ phase: 'Scanning files...', current: 5, total: 100, percentage: 5 });
-        const codeFiles = await this.getCodeFiles(codebasePath);
-        console.log(`[Context] 📁 Found ${codeFiles.length} code files`);
-
-        if (codeFiles.length === 0) {
-            progressCallback?.({ phase: 'No files to index', current: 100, total: 100, percentage: 100 });
-            return { indexedFiles: 0, totalChunks: 0, status: 'completed' };
-        }
-
-        // 3. Process each file with streaming chunk processing
-        // Reserve 10% for preparation, 90% for actual indexing
-        const indexingStartPercentage = 10;
-        const indexingEndPercentage = 100;
-        const indexingRange = indexingEndPercentage - indexingStartPercentage;
-
-        const result = await this.processFileList(
-            codeFiles,
-            codebasePath,
-            (filePath, fileIndex, totalFiles) => {
-                // Calculate progress percentage
-                const progressPercentage = indexingStartPercentage + (fileIndex / totalFiles) * indexingRange;
-
-                console.log(`[Context] 📊 Processed ${fileIndex}/${totalFiles} files`);
-                progressCallback?.({
-                    phase: `Processing files (${fileIndex}/${totalFiles})...`,
-                    current: fileIndex,
-                    total: totalFiles,
-                    percentage: Math.round(progressPercentage)
-                });
-            }
-        );
-
-        console.log(`[Context] Codebase indexing completed! Processed ${result.processedFiles} files in total, generated ${result.totalChunks} code chunks`);
-
-        progressCallback?.({
-            phase: 'Indexing complete!',
-            current: result.processedFiles,
-            total: codeFiles.length,
-            percentage: 100
+        this.logger.info(`Starting codebase indexing (${searchType})`, {
+            path: codebasePath,
+            forceReindex,
+            isHybrid
         });
 
-        return {
-            indexedFiles: result.processedFiles,
-            totalChunks: result.totalChunks,
-            status: result.status
-        };
+        try {
+            // 1. Load ignore patterns from various ignore files
+            this.logger.debug('Loading ignore patterns...');
+            await this.loadIgnorePatterns(codebasePath);
+
+            // 2. Check and prepare vector collection
+            progressCallback?.({ phase: 'Preparing collection...', current: 0, total: 100, percentage: 0 });
+            this.logger.info('Preparing vector collection...', { forceReindex });
+            await this.prepareCollection(codebasePath, forceReindex);
+
+            // 3. Recursively traverse codebase to get all supported files
+            progressCallback?.({ phase: 'Scanning files...', current: 5, total: 100, percentage: 5 });
+            this.logger.info('Scanning code files...');
+            const codeFiles = await this.getCodeFiles(codebasePath);
+            this.logger.info(`Found ${codeFiles.length} code files`, { fileCount: codeFiles.length });
+
+            if (codeFiles.length === 0) {
+                this.logger.warn('No files found to index');
+                progressCallback?.({ phase: 'No files to index', current: 100, total: 100, percentage: 100 });
+                return { indexedFiles: 0, totalChunks: 0, status: 'completed' };
+            }
+
+            // 4. Process each file with streaming chunk processing
+            // Reserve 10% for preparation, 90% for actual indexing
+            const indexingStartPercentage = 10;
+            const indexingEndPercentage = 100;
+            const indexingRange = indexingEndPercentage - indexingStartPercentage;
+
+            this.logger.info('Starting file processing...', { totalFiles: codeFiles.length });
+
+            const result = await this.processFileList(
+                codeFiles,
+                codebasePath,
+                (filePath, fileIndex, totalFiles) => {
+                    // Calculate progress percentage
+                    const progressPercentage = indexingStartPercentage + (fileIndex / totalFiles) * indexingRange;
+
+                    if (fileIndex % 10 === 0 || fileIndex === totalFiles) {
+                        this.logger?.info(`Processing progress: ${fileIndex}/${totalFiles} files`, {
+                            progress: Math.round(progressPercentage),
+                            currentFile: filePath
+                        });
+                    }
+
+                    progressCallback?.({
+                        phase: `Processing files (${fileIndex}/${totalFiles})...`,
+                        current: fileIndex,
+                        total: totalFiles,
+                        percentage: Math.round(progressPercentage)
+                    });
+                }
+            );
+
+            this.logger.info('Indexing completed!', {
+                processedFiles: result.processedFiles,
+                totalChunks: result.totalChunks,
+                status: result.status
+            });
+
+            progressCallback?.({
+                phase: 'Indexing complete!',
+                current: result.processedFiles,
+                total: codeFiles.length,
+                percentage: 100
+            });
+
+            return {
+                indexedFiles: result.processedFiles,
+                totalChunks: result.totalChunks,
+                status: result.status
+            };
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorStack = error instanceof Error ? error.stack : undefined;
+
+            this.logger?.error('Error occurred during indexing', {
+                error: errorMessage,
+                stack: errorStack
+            });
+            throw error;
+        }
     }
 
     async reindexByChange(

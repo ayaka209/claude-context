@@ -1,16 +1,19 @@
 # 使用Qwen嵌入模型配置指南
 
-Claude Context 已支持Qwen3嵌入模型系列。本文档将指导您如何配置和使用Qwen模型作为向量嵌入提供商。
+Claude Context 已支持Qwen3嵌入模型系列和阿里云DashScope服务。本文档将指导您如何配置和使用Qwen模型作为向量嵌入提供商。
 
 ## 支持的Qwen模型
 
 项目目前支持以下Qwen3嵌入模型：
 
-| 模型名称 | 维度 | 上下文长度 | 描述 |
-|---------|------|-----------|------|
-| `Qwen/Qwen3-Embedding-8B` | 4096 | 32000 | 8B参数模型，4096维度 |
-| `Qwen/Qwen3-Embedding-4B` | 2560 | 32000 | 4B参数模型，2560维度 |
-| `Qwen/Qwen3-Embedding-0.6B` | 1024 | 32000 | 0.6B参数模型，1024维度 |
+| 模型名称 | 维度 | 上下文长度 | 支持服务 | 描述 |
+|---------|------|-----------|---------|------|
+| `Qwen/Qwen3-Embedding-8B` | 4096 | 32000 | 通用OpenAI兼容端点 | 8B参数模型，4096维度 |
+| `Qwen/Qwen3-Embedding-4B` | 2560 | 32000 | 通用OpenAI兼容端点 | 4B参数模型，2560维度 |
+| `Qwen/Qwen3-Embedding-0.6B` | 1024 | 32000 | 通用OpenAI兼容端点 | 0.6B参数模型，1024维度 |
+| `text-embedding-v4` | 1024 | 32000 | 阿里云DashScope专用 | **专为阿里云优化，自动处理批处理限制** |
+
+> **重要提示**：`text-embedding-v4` 模型专为阿里云DashScope服务优化，包含自动批处理大小限制（≤10）和响应格式兼容处理。
 
 ## 配置方式
 
@@ -26,8 +29,25 @@ touch ~/.context/.env
 ```
 
 #### 2. 编辑配置文件
-在 `~/.context/.env` 文件中添加以下内容：
 
+##### 阿里云DashScope配置（推荐）：
+```bash
+# 阿里云DashScope专用配置
+EMBEDDING_PROVIDER=OpenAI
+EMBEDDING_MODEL=text-embedding-v4
+
+# 阿里云API配置
+OPENAI_API_KEY=sk-your-dashscope-api-key
+OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+
+# 向量数据库配置
+ZILLIZ_ENDPOINT=your-zilliz-endpoint
+ZILLIZ_TOKEN=your-zilliz-token
+
+# 注意：EMBEDDING_BATCH_SIZE 会自动限制为10（阿里云限制）
+```
+
+##### 通用Qwen模型配置：
 ```bash
 # 嵌入提供商设置
 EMBEDDING_PROVIDER=OpenAI
@@ -132,19 +152,35 @@ claude-context-mcp
 
 ## 故障排除
 
-### 1. 模型不支持错误
+### 1. 阿里云DashScope专用问题
+
+#### 批处理大小错误
+```
+Error: Value error, batch size is invalid, it should not be larger than 10
+```
+**解决方案**：使用 `text-embedding-v4` 模型，系统会自动处理此限制。
+
+#### 响应格式错误
+```
+Error: Unexpected embedding response format: expected embedding field
+```
+**解决方案**：确保使用 `text-embedding-v4` 模型和正确的DashScope端点URL。
+
+### 2. 模型不支持错误
 如果遇到模型不支持的错误，Claude Context会自动检测模型维度：
 ```
 [OpenAIEmbedding] ⚠️ getDimension() called for custom model 'your-model' - returning 1536. Call detectDimension() first for accurate dimension.
 ```
 
-### 2. API连接问题
-- 检查 `OPENAI_BASE_URL` 是否正确
+### 3. API连接问题
+- **阿里云**：确保使用 `https://dashscope.aliyuncs.com/compatible-mode/v1`
+- **通用端点**：检查 `OPENAI_BASE_URL` 是否正确
 - 确认API密钥有效
 - 验证端点是否支持OpenAI格式
 
-### 3. 维度不匹配
-如果使用自定义Qwen模型，系统会自动检测维度。确保向量数据库配置与模型维度匹配。
+### 4. 维度不匹配
+- **阿里云 text-embedding-v4**：固定1024维度
+- **其他模型**：系统会自动检测维度，确保向量数据库配置匹配
 
 ## 性能优化建议
 

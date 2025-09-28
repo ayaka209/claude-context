@@ -363,6 +363,8 @@ export class MilvusVectorDatabase implements VectorDatabase {
         }));
 
         try {
+            console.log(`[MilvusDB] 🚀 Starting to insert ${documents.length} documents into collection ${collectionName}`);
+
             const result = await this.client.insert({
                 collection_name: collectionName,
                 data: data,
@@ -370,10 +372,12 @@ export class MilvusVectorDatabase implements VectorDatabase {
 
             // Check if insertion was successful
             if (result.status?.error_code !== 'Success' && result.status?.error_code !== 0) {
-                throw new Error(`Vector database insert failed: ${result.status?.reason || 'Unknown error'}`);
+                const errorMsg = `Vector database insert failed: ${result.status?.reason || 'Unknown error'}`;
+                console.error(`[MilvusDB] ❌ ${errorMsg}`);
+                throw new Error(errorMsg);
             }
 
-            console.log(`[MilvusDB] Successfully inserted ${documents.length} documents`);
+            console.log(`[MilvusDB] ✅ Successfully inserted ${documents.length} documents`);
 
             // 验证步骤：插入后立即查询验证数据是否写入成功
             await this.verifyInsertedData(collectionName, documents.length);

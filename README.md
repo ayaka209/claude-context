@@ -580,16 +580,103 @@ npm run check:index --summary
 npm run check:index --json
 ```
 
+### Logging and Debugging
+
+Claude Context provides comprehensive logging for indexing operations:
+
+```bash
+# List all available log files
+npm run logs:list
+
+# View latest log file
+npm run logs --latest
+
+# View logs for specific project
+npm run logs --latest project-name
+
+# Real-time log monitoring
+npm run logs --follow project-name
+
+# Clean old log files (older than 7 days)
+npm run logs:clean
+```
+
+### Indexing Management
+
+Control indexing operations:
+
+```bash
+# Terminate specific indexing processes
+npm run index:stop project-name
+
+# Terminate all indexing processes
+npm run index:stop --all
+
+# Check running indexing processes
+npm run index:status
+```
+
 ### Supported Embedding Models
 
-| Model | Default Dimensions | Custom Dimensions | Context Length |
-|-------|-------------------|-------------------|----------------|
-| text-embedding-3-small | 1536 | ❌ | 8192 |
-| text-embedding-3-large | 3072 | ❌ | 8192 |
-| **text-embedding-v4** | **2048** | **✅** | **32000** |
-| Qwen/Qwen3-Embedding-8B | 4096 | ❌ | 32000 |
-| Qwen/Qwen3-Embedding-4B | 2560 | ❌ | 32000 |
-| Qwen/Qwen3-Embedding-0.6B | 1024 | ❌ | 32000 |
+| Model | Default Dimensions | Custom Dimensions | Context Length | Provider |
+|-------|-------------------|-------------------|----------------|----------|
+| text-embedding-3-small | 1536 | ❌ | 8192 | OpenAI |
+| text-embedding-3-large | 3072 | ❌ | 8192 | OpenAI |
+| **text-embedding-v4** | **1024** | **❌** | **32000** | **Alibaba Cloud DashScope** |
+| Qwen/Qwen3-Embedding-8B | 4096 | ❌ | 32000 | OpenAI-compatible |
+| Qwen/Qwen3-Embedding-4B | 2560 | ❌ | 32000 | OpenAI-compatible |
+| Qwen/Qwen3-Embedding-0.6B | 1024 | ❌ | 32000 | OpenAI-compatible |
+
+> **Note**: `text-embedding-v4` is optimized for Alibaba Cloud DashScope with automatic batch size limiting (≤10) and response format compatibility.
+
+---
+
+## 📁 Configuration Directory
+
+Claude Context stores all its configuration files and logs in a dedicated directory to avoid polluting your project folders:
+
+### Default Locations
+
+- **Linux/macOS**: `~/.context/`
+- **Windows**: `C:\Users\{username}\.context\`
+
+### Directory Structure
+
+```
+~/.context/
+├── mcp-codebase-snapshot.json    # Project indexing status and metadata
+├── logs/                         # Indexing operation logs
+│   ├── index-project1-2024-01-01T10-00-00.log
+│   ├── index-project2-2024-01-01T11-00-00.log
+│   └── ...
+└── cache/                        # Temporary indexing cache (auto-managed)
+```
+
+### What's Stored
+
+- **Project Snapshots**: Indexing status, progress tracking, and metadata for all indexed projects
+- **Operation Logs**: Detailed logs of indexing operations, including errors and debugging information
+- **Cache Files**: Temporary files used during indexing (automatically cleaned)
+
+### Privacy and Security
+
+- **No Source Code**: Your actual source code is **never** stored in the configuration directory
+- **Metadata Only**: Only file paths, indexing status, and operational logs are stored
+- **Vector Data**: Code embeddings are stored in your configured vector database (Zilliz Cloud/Milvus)
+- **Local Storage**: All configuration files remain on your local machine
+
+### Manual Cleanup
+
+```bash
+# View current configuration directory size
+ls -la ~/.context/
+
+# Clean old logs (recommended)
+npm run logs:clean
+
+# Complete cleanup (removes all indexing history)
+rm -rf ~/.context/
+```
 
 ---
 

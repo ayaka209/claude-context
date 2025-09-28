@@ -215,7 +215,8 @@ async function performSyncIndexing(projectPath, envVars) {
         const embedding = new OpenAIEmbedding({
             apiKey: envVars.OPENAI_API_KEY,
             model: envVars.EMBEDDING_MODEL || 'text-embedding-3-small',
-            baseURL: envVars.OPENAI_BASE_URL
+            baseURL: envVars.OPENAI_BASE_URL,
+            dimensions: envVars.EMBEDDING_DIMENSIONS ? parseInt(envVars.EMBEDDING_DIMENSIONS) : undefined
         });
 
         // Initialize vector database

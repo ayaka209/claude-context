@@ -228,6 +228,64 @@ This tool is versatile and can be used before completing various tasks to retrie
                             required: ["path"]
                         }
                     },
+                    // NOTE: Manual query tool commented out - CLI version available instead
+                    // Use: pnpm manual-query for command line interface
+                    /*
+                    {
+                        name: "manual_query",
+                        description: `
+Manual database query tool for advanced operations and debugging.
+
+🔧 **Use Cases**:
+- Direct vector database queries with custom filter expressions
+- Advanced hybrid search with custom parameters
+- Debugging and inspecting database state
+- Custom searches beyond the standard search_code functionality
+
+⚠️ **Advanced Tool**:
+- Requires knowledge of Milvus query syntax
+- Use collection naming pattern: hybrid_code_chunks_{git_hash}
+- Supports both dense vector and sparse vector (BM25) searches`,
+                        inputSchema: {
+                            type: "object",
+                            properties: {
+                                operation: {
+                                    type: "string",
+                                    description: "Type of operation to perform",
+                                    enum: ["list_collections", "query", "hybrid_search", "collection_info"],
+                                    default: "list_collections"
+                                },
+                                collection_name: {
+                                    type: "string",
+                                    description: "Name of the collection to operate on (required for query, hybrid_search, collection_info)"
+                                },
+                                query_text: {
+                                    type: "string",
+                                    description: "Natural language query for hybrid search"
+                                },
+                                filter_expr: {
+                                    type: "string",
+                                    description: "Milvus filter expression (e.g., 'relativePath like \"src/%\"')"
+                                },
+                                limit: {
+                                    type: "number",
+                                    description: "Maximum number of results",
+                                    default: 10,
+                                    maximum: 100
+                                },
+                                output_fields: {
+                                    type: "array",
+                                    items: {
+                                        type: "string"
+                                    },
+                                    description: "Fields to return in query results",
+                                    default: ["id", "content", "relativePath", "startLine", "endLine", "fileExtension", "metadata"]
+                                }
+                            },
+                            required: ["operation"]
+                        }
+                    },
+                    */
                 ]
             };
         });
@@ -245,6 +303,9 @@ This tool is versatile and can be used before completing various tasks to retrie
                     return await this.toolHandlers.handleClearIndex(args);
                 case "get_indexing_status":
                     return await this.toolHandlers.handleGetIndexingStatus(args);
+                // NOTE: Manual query handler commented out - CLI version available instead
+                // case "manual_query":
+                //     return await this.toolHandlers.handleManualQuery(args);
 
                 default:
                     throw new Error(`Unknown tool: ${name}`);

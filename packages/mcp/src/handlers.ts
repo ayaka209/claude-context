@@ -532,7 +532,11 @@ export class ToolHandlers {
             console.log(`[SEARCH] ✅ Search completed! Found ${searchResults.length} results using ${embeddingProvider.getProvider()} embeddings`);
 
             if (searchResults.length === 0) {
+                // Get collection name for more detailed error reporting
+                const collectionName = this.context.getCollectionName(absolutePath, gitRepoIdentifier);
                 let noResultsMessage = `No results found for query: "${query}" in codebase '${absolutePath}'`;
+                noResultsMessage += `\nVector database collection: '${collectionName}'`;
+
                 if (isIndexing) {
                     noResultsMessage += `\n\nNote: This codebase is still being indexed. Try searching again after indexing completes, or the query may not match any indexed content.`;
                 }
@@ -829,4 +833,151 @@ export class ToolHandlers {
             };
         }
     }
+
+    /**
+     * Handle manual database query operations
+     * NOTE: Commented out - CLI version available instead (use: pnpm manual-query)
+     */
+    /*
+    async handleManualQuery(args: any): Promise<any> {
+        try {
+            const {
+                operation = "list_collections",
+                collection_name,
+                query_text,
+                filter_expr,
+                limit = 10,
+                output_fields = ["id", "content", "relativePath", "startLine", "endLine", "fileExtension", "metadata"]
+            } = args;
+
+            const vectorDb = this.context.getVectorDatabase();
+
+            switch (operation) {
+                case "list_collections":
+                    console.log(`[MANUAL-QUERY] 📋 Listing all collections...`);
+                    const collections = await vectorDb.listCollections();
+
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Found ${collections.length} collections:\n${collections.map((name, index) => `${index + 1}. ${name}`).join('\n')}`
+                        }]
+                    };
+
+                case "collection_info":
+                    if (!collection_name) {
+                        throw new Error("collection_name is required for collection_info operation");
+                    }
+
+                    console.log(`[MANUAL-QUERY] ℹ️  Getting collection info for: ${collection_name}`);
+                    const exists = await vectorDb.hasCollection(collection_name);
+
+                    if (!exists) {
+                        return {
+                            content: [{
+                                type: "text",
+                                text: `❌ Collection '${collection_name}' does not exist`
+                            }],
+                            isError: true
+                        };
+                    }
+
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `✅ Collection '${collection_name}' exists and is accessible`
+                        }]
+                    };
+
+                case "query":
+                    if (!collection_name) {
+                        throw new Error("collection_name is required for query operation");
+                    }
+
+                    console.log(`[MANUAL-QUERY] 🔍 Querying collection: ${collection_name}`);
+                    const queryResults = await vectorDb.query(
+                        collection_name,
+                        filter_expr || "",
+                        output_fields,
+                        limit
+                    );
+
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Found ${queryResults.length} results:\n${JSON.stringify(queryResults, null, 2)}`
+                        }]
+                    };
+
+                case "hybrid_search":
+                    if (!collection_name) {
+                        throw new Error("collection_name is required for hybrid_search operation");
+                    }
+                    if (!query_text) {
+                        throw new Error("query_text is required for hybrid_search operation");
+                    }
+
+                    console.log(`[MANUAL-QUERY] 🔎 Performing hybrid search on: ${collection_name}`);
+                    console.log(`[MANUAL-QUERY] Query: "${query_text}"`);
+
+                    // Get embedding for the query
+                    const embedding = this.context.getEmbedding();
+                    const queryEmbedding = await embedding.embed(query_text);
+
+                    // Prepare hybrid search requests
+                    const searchRequests = [
+                        {
+                            data: queryEmbedding.vector,
+                            anns_field: "vector",
+                            param: { "nprobe": 10 },
+                            limit: limit
+                        },
+                        {
+                            data: query_text,
+                            anns_field: "sparse_vector",
+                            param: { "drop_ratio_search": 0.2 },
+                            limit: limit
+                        }
+                    ];
+
+                    const hybridResults = await vectorDb.hybridSearch(
+                        collection_name,
+                        searchRequests,
+                        {
+                            rerank: { strategy: 'rrf', params: { k: 100 } },
+                            limit: limit,
+                            filterExpr: filter_expr
+                        }
+                    );
+
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Found ${hybridResults.length} hybrid search results:\n${JSON.stringify(hybridResults.map(r => ({
+                                score: r.score,
+                                id: r.document.id,
+                                relativePath: r.document.relativePath,
+                                startLine: r.document.startLine,
+                                endLine: r.document.endLine,
+                                content: r.document.content.substring(0, 200) + (r.document.content.length > 200 ? '...' : '')
+                            })), null, 2)}`
+                        }]
+                    };
+
+                default:
+                    throw new Error(`Unknown operation: ${operation}`);
+            }
+
+        } catch (error: any) {
+            console.error(`[MANUAL-QUERY] Error:`, error);
+            return {
+                content: [{
+                    type: "text",
+                    text: `Manual query error: ${error.message || error}`
+                }],
+                isError: true
+            };
+        }
+    }
+    */
 } 

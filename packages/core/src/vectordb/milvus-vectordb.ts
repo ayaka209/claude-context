@@ -769,8 +769,8 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 document: {
                     id: result.id,
                     content: result.content,
-                    vector: [],
-                    sparse_vector: [],
+                    vector: result.vector || [],
+                    sparse_vector: result.sparse_vector || undefined,
                     relativePath: result.relativePath,
                     startLine: result.startLine,
                     endLine: result.endLine,

@@ -2,6 +2,7 @@
 export interface VectorDocument {
     id: string;
     vector: number[];
+    sparse_vector?: Record<string, number>; // BM25 sparse vector for hybrid search
     content: string;
     relativePath: string;
     startLine: number;

@@ -770,8 +770,8 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
                 document: {
                     id: result.id,
                     content: result.content,
-                    vector: [], // Vector not returned in search results
-                    sparse_vector: [], // Vector not returned in search results
+                    vector: result.vector || [], // Vector not returned in search results
+                    sparse_vector: result.sparse_vector || undefined, // Vector not returned in search results
                     relativePath: result.relativePath,
                     startLine: result.startLine,
                     endLine: result.endLine,

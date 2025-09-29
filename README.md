@@ -36,13 +36,15 @@
 
 > **Note**: These are experimental additions to the original project. For stable production use, please consider the official version.
 
-🎯 **Embedding Model Enhancements**: Additional support for custom dimensions and `text-embedding-v4` model (merged from community PRs)
+🎯 **Embedding Model Enhancements**: Additional support for custom dimensions and `text-embedding-v4` model with 2048-dimensional vectors (merged from community PRs)
 
 🧪 **Testing and Validation Tools**: Community-contributed tools for testing embedding model availability across different providers
 
 🔧 **External Project Management**: Experimental command-line tools for managing projects outside the main workflow
 
 📊 **Progress Monitoring**: Real-time indexing progress tracking with detailed status reporting
+
+🔍 **Advanced Vector Database Tools**: Manual query interface with both CLI and interactive modes for direct database operations, debugging, and analysis
 
 **Disclaimer**: These features are experimental and may have bugs. They represent community contributions and testing grounds for potential upstream integration.
 
@@ -601,6 +603,64 @@ npm run logs --follow project-name
 npm run logs:clean
 ```
 
+### Manual Vector Database Queries
+
+Advanced users can directly query the vector database for debugging and analysis:
+
+```bash
+# List all collections in the vector database
+npm run manual-query -- --operation list_collections
+
+# Check if a specific collection exists
+npm run manual-query -- --operation collection_info --collection "hybrid_code_chunks_abc123"
+
+# Perform direct database query with custom filter
+npm run manual-query -- --operation query --collection "hybrid_code_chunks_abc123" --filter "relativePath like 'src/%'" --limit 20
+
+# Perform hybrid search (dense + sparse vectors)
+npm run manual-query -- --operation hybrid_search --collection "hybrid_code_chunks_abc123" --query "function definition" --limit 10
+
+# Show detailed help and examples
+npm run manual-query -- --help
+```
+
+#### Interactive Query Mode
+
+For a more user-friendly experience, use the interactive query interface:
+
+```bash
+# Start interactive mode with color output and command completion
+npm run manual-query:interactive
+```
+
+**Interactive commands:**
+- `list` - List all collections
+- `info <collection>` - Check collection status
+- `query <collection> [filter]` - Query with optional filter
+- `search <collection> <query>` - Hybrid search
+- `limit <number>` - Set result limit
+- `status` - Show current settings
+- `help` - Show available commands
+- `exit` - Exit interactive mode
+
+**Example interactive session:**
+```
+claude-context> list
+✅ Found 4 collections:
+  1. hybrid_code_chunks_git_github_com_myrepo_abc123
+  2. hybrid_code_chunks_f12bdcb4
+
+claude-context> limit 5
+✅ Result limit set to 5
+
+claude-context> search hybrid_code_chunks_git_github_com_myrepo_abc123 error handling
+🔎 Performing hybrid search...
+✅ Found 3 results with scores and content preview
+
+claude-context> exit
+👋 Goodbye!
+```
+
 ### Indexing Management
 
 Control indexing operations:
@@ -622,12 +682,12 @@ npm run index:status
 |-------|-------------------|-------------------|----------------|----------|
 | text-embedding-3-small | 1536 | ❌ | 8192 | OpenAI |
 | text-embedding-3-large | 3072 | ❌ | 8192 | OpenAI |
-| **text-embedding-v4** | **1024** | **❌** | **32000** | **Alibaba Cloud DashScope** |
+| **text-embedding-v4** | **2048** | **✅** | **32000** | **Alibaba Cloud DashScope** |
 | Qwen/Qwen3-Embedding-8B | 4096 | ❌ | 32000 | OpenAI-compatible |
 | Qwen/Qwen3-Embedding-4B | 2560 | ❌ | 32000 | OpenAI-compatible |
 | Qwen/Qwen3-Embedding-0.6B | 1024 | ❌ | 32000 | OpenAI-compatible |
 
-> **Note**: `text-embedding-v4` is optimized for Alibaba Cloud DashScope with automatic batch size limiting (≤10) and response format compatibility.
+> **Note**: `text-embedding-v4` is optimized for Alibaba Cloud DashScope with automatic batch size limiting (≤10), response format compatibility, and supports custom dimensions up to 2048. Use `EMBEDDING_DIMENSIONS` environment variable to configure custom dimensions.
 
 ---
 
@@ -696,19 +756,19 @@ For detailed explanation of file inclusion and exclusion rules, and how to custo
 
 #### 1. `index_codebase`
 
-Index a codebase directory for hybrid search (BM25 + dense vector).
+Index a codebase directory for hybrid search (BM25 + dense vector). Supports automatic sparse vector generation for improved search relevance.
 
 #### 2. `search_code`
 
-Search the indexed codebase using natural language queries with hybrid search (BM25 + dense vector).
+Search the indexed codebase using natural language queries with hybrid search (BM25 + dense vector). Returns results with both dense and sparse vector scores, collection names for debugging, and enhanced error reporting.
 
 #### 3. `clear_index`
 
-Clear the search index for a specific codebase.
+Clear the search index for a specific codebase. Safely removes both dense and sparse vector data from the vector database.
 
 #### 4. `get_indexing_status`
 
-Get the current indexing status of a codebase. Shows progress percentage for actively indexing codebases and completion status for indexed codebases.
+Get the current indexing status of a codebase. Shows progress percentage for actively indexing codebases, completion status for indexed codebases, and vector database collection information.
 
 ---
 

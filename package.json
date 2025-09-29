@@ -38,7 +38,8 @@
         "logs:list": "node scripts/view-logs.js --list",
         "logs:clean": "node scripts/view-logs.js --clean",
         "index:stop": "node scripts/stop-indexing.js",
-        "index:status": "node scripts/indexing-status.js"
+        "index:status": "node scripts/indexing-status.js",
+        "manual-query": "node scripts/manual-query.js"
     },
     "devDependencies": {
         "@types/node": "^20.0.0",

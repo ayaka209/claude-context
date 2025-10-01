@@ -118,6 +118,7 @@ ${colorize('Query Operations:', 'yellow')}
 
 ${colorize('Management Operations:', 'yellow')}
   ${colorize('drop <collection>', 'green')}             - Drop/delete a collection (⚠️  DANGEROUS)
+  ${colorize('clearindex <project-path>', 'green')}     - Clear project index (collection + cache)
   ${colorize('reindex <project-path>', 'green')}        - Re-index a project (clears and rebuilds)
   ${colorize('project <project-path>', 'green')}        - Show project metadata (.context/project.json)
 
@@ -136,6 +137,7 @@ ${colorize('Examples:', 'yellow')}
   ${colorize('> search hybrid_code_chunks_abc123 function definition', 'blue')}
   ${colorize('> find hybrid_code_chunks_abc123 error handling', 'blue')}
   ${colorize('> drop hybrid_code_chunks_abc123', 'blue')}
+  ${colorize('> clearindex /path/to/project', 'blue')}
   ${colorize('> reindex /path/to/project', 'blue')}
   ${colorize('> project /path/to/project', 'blue')}
     `);
@@ -470,6 +472,75 @@ async function handleProject(projectPath) {
     }
 }
 
+async function handleClearIndex(projectPath) {
+    if (!projectPath) {
+        console.error(colorize('❌ Usage: clearindex <project_path>', 'red'));
+        return;
+    }
+
+    try {
+        // Validate project path
+        const resolvedPath = path.resolve(projectPath);
+        if (!fs.existsSync(resolvedPath)) {
+            console.error(colorize(`❌ Error: Project path does not exist: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        if (!fs.statSync(resolvedPath).isDirectory()) {
+            console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        console.log(colorize(`📂 Project path: ${resolvedPath}`, 'blue'));
+
+        // Get the collection name that would be used for this project
+        const collectionName = context.getCollectionName(resolvedPath);
+        console.log(colorize(`🗄️  Collection name: ${collectionName}`, 'blue'));
+
+        // Check if collection exists
+        const exists = await vectorDatabase.hasCollection(collectionName);
+        if (!exists) {
+            console.log(colorize(`⚠️  Collection '${collectionName}' does not exist`, 'yellow'));
+            console.log(colorize('Nothing to clear. Project may not have been indexed yet.', 'yellow'));
+            return;
+        }
+
+        // Confirm before clearing
+        return new Promise((resolve) => {
+            rl.question(colorize(`⚠️  Are you sure you want to CLEAR the index for '${path.basename(resolvedPath)}'? This will delete all indexed data. (yes/NO): `, 'yellow'), async (answer) => {
+                if (answer.toLowerCase() === 'yes') {
+                    try {
+                        console.log(colorize('\n🗑️  Starting index cleanup...', 'bright'));
+
+                        // Clear the index (drops collection, clears cache, clears metadata)
+                        await context.clearIndex(resolvedPath);
+
+                        console.log(colorize('\n✅ Index cleared successfully!', 'green'));
+                        console.log(colorize('The following have been removed:', 'cyan'));
+                        console.log(colorize(`  - Vector database collection: ${collectionName}`, 'cyan'));
+                        console.log(colorize(`  - Project metadata: .context/project.json`, 'cyan'));
+                        console.log(colorize(`  - Hash cache: .context/file-hashes.json`, 'cyan'));
+                        console.log(colorize(`  - Merkle tree snapshot`, 'cyan'));
+                        console.log();
+                        console.log(colorize('To re-index this project, use:', 'blue'));
+                        console.log(colorize(`  reindex ${projectPath}`, 'cyan'));
+                    } catch (error) {
+                        console.error(colorize(`\n❌ Error during index cleanup: ${error.message}`, 'red'));
+                        if (error.stack) {
+                            console.error(colorize(`Stack trace: ${error.stack}`, 'red'));
+                        }
+                    }
+                } else {
+                    console.log(colorize('ℹ️  Operation cancelled', 'yellow'));
+                }
+                resolve();
+            });
+        });
+    } catch (error) {
+        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+    }
+}
+
 async function handleReindex(projectPath) {
     if (!projectPath) {
         console.error(colorize('❌ Usage: reindex <project_path>', 'red'));
@@ -609,6 +680,10 @@ async function processCommand(input) {
 
         case 'project':
             await handleProject(args.slice(0).join(' '));
+            break;
+
+        case 'clearindex':
+            await handleClearIndex(args.slice(0).join(' '));
             break;
 
         default:

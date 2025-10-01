@@ -647,6 +647,9 @@ npm run query project /path/to/your/project
 # Re-index a project
 npm run query reindex /path/to/your/project
 
+# Clear project index completely (for testing)
+npm run query clearindex /path/to/your/project
+
 # List collections
 npm run query list
 
@@ -664,6 +667,7 @@ npm run query drop my_collection
 - `search <collection> <query>` - Hybrid search
 - `drop <collection>` - Drop/delete a collection (requires confirmation)
 - `reindex <project-path>` - Re-index a project (clears and rebuilds)
+- `clearindex <project-path>` - Clear project index completely (collection + cache + metadata)
 - `project <project-path>` - Show project metadata and git tracking status
 - `limit <number>` - Set result limit
 - `status` - Show current settings

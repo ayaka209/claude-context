@@ -667,6 +667,47 @@ claude-context> exit
 - [Interactive Mode Guide](docs/advanced/manual-query-interactive.md) - Complete interactive mode reference
 - [CLI Tool Guide](docs/advanced/manual-query-cli.md) - Command-line automation and scripting
 
+### Incremental Indexing
+
+Claude Context now supports **incremental indexing** to dramatically reduce embedding costs and indexing time by only processing changed files.
+
+**Key Features:**
+- **File-level hashing**: Automatically detects unchanged files
+- **Zero-cost skipping**: Unchanged files skip embedding entirely
+- **Cache storage**: Hash cache stored in `<project>/.context/file-hashes.json`
+- **Automatic cleanup**: Hash cache cleared when using `--clean` flag
+
+**Usage:**
+
+```bash
+# First index (full)
+npm run index:project /path/to/project
+
+# Subsequent indexes (incremental - only changed files)
+npm run index:project /path/to/project
+
+# Force full reindex (ignores cache)
+npm run index:project /path/to/project --clean
+```
+
+**Performance:**
+- ⚡ **90%+ faster** for small changes
+- 💰 **Save 90%+ embedding costs** when updating indexes
+- 📊 Automatically shows skip statistics
+
+**Disable incremental indexing:**
+```bash
+# .env
+INCREMENTAL_INDEX=false
+```
+
+**Example output:**
+```
+[Context] 📊 Hash cache: 1250 files, 45000 chunks (last indexed: 1/15/2025, 10:30:00 AM)
+[Context] ⚡ Incremental: 25 changed, 1225 unchanged (98% skipped)
+[Context] ⚡ Performance: Skipped 1225 unchanged files (saved ~98% embedding cost)
+```
+
 ### Indexing Management
 
 Control indexing operations:

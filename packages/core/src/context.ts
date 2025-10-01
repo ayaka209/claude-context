@@ -19,6 +19,7 @@ import {
 import { SemanticSearchResult } from './types';
 import { envManager } from './utils/env-manager';
 import { IndexLogger } from './utils/logger';
+import { SimpleHashCacheManager } from './cache/simple-hash-cache';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -296,16 +297,69 @@ export class Context {
             // 3. Recursively traverse codebase to get all supported files
             progressCallback?.({ phase: 'Scanning files...', current: 5, total: 100, percentage: 5 });
             this.logger.info('Scanning code files...');
-            const codeFiles = await this.getCodeFiles(codebasePath);
-            this.logger.info(`Found ${codeFiles.length} code files`, { fileCount: codeFiles.length });
+            const allCodeFiles = await this.getCodeFiles(codebasePath);
+            this.logger.info(`Found ${allCodeFiles.length} code files`, { fileCount: allCodeFiles.length });
 
-            if (codeFiles.length === 0) {
+            if (allCodeFiles.length === 0) {
                 this.logger.warn('No files found to index');
                 progressCallback?.({ phase: 'No files to index', current: 100, total: 100, percentage: 100 });
                 return { indexedFiles: 0, totalChunks: 0, status: 'completed' };
             }
 
-            // 4. Process each file with streaming chunk processing
+            // 4. Initialize hash cache for incremental indexing
+            const incrementalEnabled = envManager.get('INCREMENTAL_INDEX') !== 'false' && !forceReindex;
+            const collectionName = this.getCollectionName(codebasePath);
+            const hashCache = incrementalEnabled ? new SimpleHashCacheManager(codebasePath, collectionName) : null;
+
+            let codeFiles = allCodeFiles;
+            let skippedFiles = 0;
+
+            if (hashCache) {
+                const stats = hashCache.getStats();
+                this.logger.info('Incremental indexing enabled', {
+                    cachedFiles: stats.totalFiles,
+                    cachedChunks: stats.totalChunks,
+                    lastIndexed: stats.lastIndexed
+                });
+                console.log(`[Context] 📊 Hash cache: ${stats.totalFiles} files, ${stats.totalChunks} chunks (last indexed: ${stats.lastIndexed.toLocaleString()})`);
+
+                // Filter files based on hash
+                const filesToIndex: string[] = [];
+                for (const filePath of allCodeFiles) {
+                    try {
+                        const content = await fs.promises.readFile(filePath, 'utf-8');
+                        const currentHash = SimpleHashCacheManager.calculateHash(content);
+                        const relativePath = path.relative(codebasePath, filePath);
+
+                        if (hashCache.hasFileChanged(relativePath, currentHash)) {
+                            filesToIndex.push(filePath);
+                        } else {
+                            skippedFiles++;
+                        }
+                    } catch (error) {
+                        // If we can't read the file, include it for processing
+                        filesToIndex.push(filePath);
+                    }
+                }
+
+                codeFiles = filesToIndex;
+                console.log(`[Context] ⚡ Incremental: ${filesToIndex.length} changed, ${skippedFiles} unchanged (${Math.round(skippedFiles/allCodeFiles.length*100)}% skipped)`);
+                this.logger.info(`Incremental filtering complete`, {
+                    totalFiles: allCodeFiles.length,
+                    changedFiles: filesToIndex.length,
+                    skippedFiles
+                });
+            } else if (forceReindex) {
+                console.log('[Context] 🔄 Force reindex: processing all files');
+            }
+
+            if (codeFiles.length === 0) {
+                console.log('[Context] ✅ No files to index (all unchanged)');
+                if (hashCache) hashCache.save();
+                return { indexedFiles: 0, totalChunks: 0, status: 'completed' };
+            }
+
+            // 5. Process each file with streaming chunk processing
             // Reserve 10% for preparation, 90% for actual indexing
             const indexingStartPercentage = 10;
             const indexingEndPercentage = 100;
@@ -316,6 +370,7 @@ export class Context {
             const result = await this.processFileList(
                 codeFiles,
                 codebasePath,
+                hashCache,
                 (filePath, fileIndex, totalFiles) => {
                     // Calculate progress percentage
                     const progressPercentage = indexingStartPercentage + (fileIndex / totalFiles) * indexingRange;
@@ -336,11 +391,22 @@ export class Context {
                 }
             );
 
+            // Save hash cache
+            if (hashCache) {
+                hashCache.save();
+                console.log('[Context] 💾 Hash cache saved');
+            }
+
             this.logger.info('Indexing completed!', {
                 processedFiles: result.processedFiles,
+                skippedFiles,
                 totalChunks: result.totalChunks,
                 status: result.status
             });
+
+            if (skippedFiles > 0) {
+                console.log(`[Context] ⚡ Performance: Skipped ${skippedFiles} unchanged files (saved ~${Math.round(skippedFiles * 100 / allCodeFiles.length)}% embedding cost)`);
+            }
 
             progressCallback?.({
                 phase: 'Indexing complete!',
@@ -424,6 +490,7 @@ export class Context {
             await this.processFileList(
                 filesToIndex,
                 codebasePath,
+                null,  // No hash cache for reindexByChange
                 (filePath, fileIndex, totalFiles) => {
                     updateProgress(`Indexed ${filePath} (${fileIndex}/${totalFiles})`);
                 }
@@ -601,17 +668,24 @@ export class Context {
         const collectionName = this.getCollectionName(codebasePath, gitRepoIdentifier);
         const collectionExists = await this.vectorDatabase.hasCollection(collectionName);
 
-        progressCallback?.({ phase: 'Removing index data...', current: 50, total: 100, percentage: 50 });
+        progressCallback?.({ phase: 'Removing index data...', current: 40, total: 100, percentage: 40 });
 
         if (collectionExists) {
             await this.vectorDatabase.dropCollection(collectionName);
         }
 
         // Delete snapshot file
+        progressCallback?.({ phase: 'Removing snapshot...', current: 60, total: 100, percentage: 60 });
         await FileSynchronizer.deleteSnapshot(codebasePath);
 
+        // Clear hash cache
+        progressCallback?.({ phase: 'Clearing hash cache...', current: 80, total: 100, percentage: 80 });
+        const hashCache = new SimpleHashCacheManager(codebasePath, collectionName);
+        hashCache.clear();
+        console.log('[Context] 🗑️  Hash cache cleared');
+
         progressCallback?.({ phase: 'Index cleared', current: 100, total: 100, percentage: 100 });
-        console.log('[Context] Index data cleaned');
+        console.log('[Context] ✅ Index data cleaned');
     }
 
     /**
@@ -752,12 +826,14 @@ export class Context {
  * Process a list of files with streaming chunk processing
  * @param filePaths Array of file paths to process
  * @param codebasePath Base path for the codebase
+ * @param hashCache Optional hash cache for incremental indexing
  * @param onFileProcessed Callback called when each file is processed
  * @returns Object with processed file count and total chunk count
  */
     private async processFileList(
         filePaths: string[],
         codebasePath: string,
+        hashCache: SimpleHashCacheManager | null,
         onFileProcessed?: (filePath: string, fileIndex: number, totalFiles: number) => void
     ): Promise<{ processedFiles: number; totalChunks: number; status: 'completed' | 'limit_reached' }> {
         const isHybrid = this.getIsHybrid();
@@ -811,6 +887,13 @@ export class Context {
                         limitReached = true;
                         break; // Exit the inner loop (over chunks)
                     }
+                }
+
+                // Update hash cache after successful processing
+                if (hashCache && chunks.length > 0) {
+                    const relativePath = path.relative(codebasePath, filePath);
+                    const fileHash = SimpleHashCacheManager.calculateHash(content);
+                    hashCache.updateFile(relativePath, fileHash, chunks.length);
                 }
 
                 processedFiles++;

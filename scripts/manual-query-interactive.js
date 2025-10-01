@@ -21,6 +21,7 @@ let context = null;
 let vectorDatabase = null;
 let embedding = null;
 let rl = null;
+let workingDirectory = null; // Current working directory for project operations
 
 // Color codes for terminal output
 const colors = {
@@ -123,6 +124,8 @@ ${colorize('Management Operations:', 'yellow')}
   ${colorize('project <project-path>', 'green')}        - Show project metadata (.context/project.json)
 
 ${colorize('Utility Commands:', 'yellow')}
+  ${colorize('cd <project-path>', 'green')}             - Set working directory for project operations
+  ${colorize('pwd', 'green')}                           - Show current working directory
   ${colorize('limit <number>', 'green')}                - Set result limit (default: 10)
   ${colorize('status', 'green')}                        - Show current settings
   ${colorize('clear', 'green')}                         - Clear screen
@@ -155,7 +158,37 @@ ${colorize('────────────────', 'cyan')}
   Result Limit: ${colorize(settings.limit, 'yellow')}
   Embedding Model: ${colorize(process.env.EMBEDDING_MODEL || 'text-embedding-3-small', 'yellow')}
   Vector DB: ${colorize((process.env.ZILLIZ_ENDPOINT || process.env.MILVUS_ENDPOINT || '').split('.')[0] + '...', 'yellow')}
+  Working Directory: ${colorize(workingDirectory || '(not set)', 'yellow')}
     `);
+}
+
+function handleCd(projectPath) {
+    if (!projectPath) {
+        console.error(colorize('❌ Usage: cd <project_path>', 'red'));
+        return;
+    }
+
+    const resolvedPath = path.resolve(projectPath);
+    if (!fs.existsSync(resolvedPath)) {
+        console.error(colorize(`❌ Error: Path does not exist: ${resolvedPath}`, 'red'));
+        return;
+    }
+
+    if (!fs.statSync(resolvedPath).isDirectory()) {
+        console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+        return;
+    }
+
+    workingDirectory = resolvedPath;
+    console.log(colorize(`✅ Working directory set to: ${workingDirectory}`, 'green'));
+}
+
+function handlePwd() {
+    if (workingDirectory) {
+        console.log(colorize(`📂 Current working directory: ${workingDirectory}`, 'blue'));
+    } else {
+        console.log(colorize('ℹ️  No working directory set. Use "cd <path>" to set one.', 'yellow'));
+    }
 }
 
 async function handleList() {
@@ -344,9 +377,14 @@ async function handleDrop(collection) {
 }
 
 async function handleProject(projectPath) {
+    // Use working directory if no path provided
     if (!projectPath) {
-        console.error(colorize('❌ Usage: project <project_path>', 'red'));
-        return;
+        if (!workingDirectory) {
+            console.error(colorize('❌ Usage: project <project_path>', 'red'));
+            console.error(colorize('   Or set working directory first with: cd <project_path>', 'yellow'));
+            return;
+        }
+        projectPath = workingDirectory;
     }
 
     try {
@@ -473,9 +511,14 @@ async function handleProject(projectPath) {
 }
 
 async function handleClearIndex(projectPath) {
+    // Use working directory if no path provided
     if (!projectPath) {
-        console.error(colorize('❌ Usage: clearindex <project_path>', 'red'));
-        return;
+        if (!workingDirectory) {
+            console.error(colorize('❌ Usage: clearindex <project_path>', 'red'));
+            console.error(colorize('   Or set working directory first with: cd <project_path>', 'yellow'));
+            return;
+        }
+        projectPath = workingDirectory;
     }
 
     try {
@@ -542,9 +585,14 @@ async function handleClearIndex(projectPath) {
 }
 
 async function handleReindex(projectPath) {
+    // Use working directory if no path provided
     if (!projectPath) {
-        console.error(colorize('❌ Usage: reindex <project_path>', 'red'));
-        return;
+        if (!workingDirectory) {
+            console.error(colorize('❌ Usage: reindex <project_path>', 'red'));
+            console.error(colorize('   Or set working directory first with: cd <project_path>', 'yellow'));
+            return;
+        }
+        projectPath = workingDirectory;
     }
 
     try {
@@ -644,6 +692,14 @@ async function processCommand(input) {
             showStatus();
             break;
 
+        case 'cd':
+            handleCd(args.slice(0).join(' '));
+            break;
+
+        case 'pwd':
+            handlePwd();
+            break;
+
         case 'limit':
             if (args.length === 0) {
                 console.log(colorize(`Current limit: ${settings.limit}`, 'yellow'));
@@ -727,6 +783,22 @@ async function main() {
         // Parse command-line arguments
         const args = process.argv.slice(2);
 
+        // Check for --cwd or -C flag to set working directory
+        let cwdIndex = args.findIndex(arg => arg === '--cwd' || arg === '-C');
+        if (cwdIndex !== -1 && args[cwdIndex + 1]) {
+            const cwdPath = args[cwdIndex + 1];
+            const resolvedPath = path.resolve(cwdPath);
+
+            if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
+                workingDirectory = resolvedPath;
+                // Remove --cwd and its value from args
+                args.splice(cwdIndex, 2);
+            } else {
+                console.error(colorize(`❌ Error: Invalid working directory: ${cwdPath}`, 'red'));
+                process.exit(1);
+            }
+        }
+
         // Check if running in non-interactive mode (with command arguments)
         if (args.length > 0) {
             // Non-interactive mode: execute command directly
@@ -738,6 +810,11 @@ async function main() {
 
             // Initialize components
             await initializeComponents();
+
+            // Show working directory if set
+            if (workingDirectory) {
+                console.log(colorize(`📂 Working directory: ${workingDirectory}`, 'blue'));
+            }
 
             // Execute the command
             const commandLine = args.join(' ');
@@ -756,6 +833,11 @@ async function main() {
 
             // Initialize components
             await initializeComponents();
+
+            // Show working directory if set
+            if (workingDirectory) {
+                console.log(colorize(`📂 Working directory: ${workingDirectory}`, 'blue'));
+            }
 
             // Start interactive session
             startInteractiveSession();

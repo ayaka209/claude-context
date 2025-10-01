@@ -1,6 +1,6 @@
 {
     "name": "@ayaka209/claude-context-core",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "description": "Enhanced core indexing engine for Claude Context with advanced embedding support",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

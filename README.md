@@ -660,22 +660,55 @@ npm run query search my_collection "error handling code"
 npm run query drop my_collection
 ```
 
+**Working Directory Support** (New):
+
+Set a working directory to avoid typing project paths repeatedly:
+
+```bash
+# Start with working directory
+npm run query -- --cwd /path/to/your/project
+# or use short form
+npm run query -- -C /path/to/your/project
+
+# Now you can use commands without paths
+> reindex         # Uses working directory
+> project         # Uses working directory
+> clearindex      # Uses working directory
+
+# Or set it during interactive session
+> cd /path/to/your/project
+> pwd
+📂 Current working directory: /path/to/your/project
+> reindex         # No path needed!
+```
+
 **Interactive commands:**
 - `list` - List all collections
 - `info <collection>` - Check collection status
 - `query <collection> [filter]` - Query with optional filter
 - `search <collection> <query>` - Hybrid search
 - `drop <collection>` - Drop/delete a collection (requires confirmation)
-- `reindex <project-path>` - Re-index a project (clears and rebuilds)
-- `clearindex <project-path>` - Clear project index completely (collection + cache + metadata)
-- `project <project-path>` - Show project metadata and git tracking status
+- `reindex [project-path]` - Re-index a project (uses working directory if path omitted)
+- `clearindex [project-path]` - Clear project index completely (uses working directory if path omitted)
+- `project [project-path]` - Show project metadata and git tracking status (uses working directory if path omitted)
+- `cd <project-path>` - Set working directory for project operations
+- `pwd` - Show current working directory
 - `limit <number>` - Set result limit
-- `status` - Show current settings
+- `status` - Show current settings (including working directory)
 - `help` - Show available commands
 - `exit` - Exit interactive mode
 
 **Example interactive session:**
 ```
+# Start with working directory
+$ npm run query -- --cwd /path/to/myproject
+📂 Working directory: /path/to/myproject
+
+claude-context> project
+📊 Project Metadata
+Collection: hybrid_code_chunks_git_github_com_myrepo_abc123
+...
+
 claude-context> list
 ✅ Found 4 collections:
   1. hybrid_code_chunks_git_github_com_myrepo_abc123
@@ -687,6 +720,15 @@ claude-context> limit 5
 claude-context> search hybrid_code_chunks_git_github_com_myrepo_abc123 error handling
 🔎 Performing hybrid search...
 ✅ Found 3 results with scores and content preview
+
+claude-context> cd /another/project
+✅ Working directory set to: /another/project
+
+claude-context> pwd
+📂 Current working directory: /another/project
+
+claude-context> reindex
+# Re-indexes /another/project without typing the path
 
 claude-context> exit
 👋 Goodbye!

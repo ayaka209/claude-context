@@ -51,6 +51,8 @@ Thumbs.db
 
 # Claude Context cache (generated in indexed projects)
 .context/
+# But allow project metadata to be committed for team sharing
+!.context/project.json
 
 # Extension specific
 *.vsix

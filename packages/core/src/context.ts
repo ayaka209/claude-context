@@ -20,6 +20,7 @@ import { SemanticSearchResult } from './types';
 import { envManager } from './utils/env-manager';
 import { IndexLogger } from './utils/logger';
 import { SimpleHashCacheManager } from './cache/simple-hash-cache';
+import { ProjectMetadataManager } from './cache/project-metadata';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -236,29 +237,30 @@ export class Context {
      * Optionally accepts a git repository identifier for consistent naming across different local paths
      */
     public getCollectionName(codebasePath: string, gitRepoIdentifier?: string | null): string {
-        const isHybrid = this.getIsHybrid();
-        const prefix = isHybrid === true ? 'hybrid_code_chunks' : 'code_chunks';
+        // Try to load collection name from project metadata first
+        const projectMetadata = new ProjectMetadataManager(codebasePath);
+        const existingCollectionName = projectMetadata.getCollectionName();
 
-        // If git repository identifier is provided, use it for collection naming
-        if (gitRepoIdentifier) {
-            // Create a clean identifier by replacing special characters
-            const cleanIdentifier = gitRepoIdentifier
-                .replace(/[^a-zA-Z0-9]/g, '_')  // Replace non-alphanumeric with underscore
-                .toLowerCase()
-                .substring(0, 32);  // Limit length for collection name
-
-            // Create hash from the git identifier for uniqueness
-            const hash = crypto.createHash('md5').update(gitRepoIdentifier).digest('hex');
-
-            console.log(`[Context] Using git-based collection naming for: ${gitRepoIdentifier}`);
-            return `${prefix}_git_${cleanIdentifier}_${hash.substring(0, 8)}`;
+        if (existingCollectionName) {
+            console.log(`[Context] 📖 Using collection name from project metadata: ${existingCollectionName}`);
+            return existingCollectionName;
         }
 
-        // Fallback to path-based naming (original behavior)
-        const normalizedPath = path.resolve(codebasePath);
-        const hash = crypto.createHash('md5').update(normalizedPath).digest('hex');
-        console.log(`[Context] Using path-based collection naming for: ${normalizedPath}`);
-        return `${prefix}_${hash.substring(0, 8)}`;
+        // Generate new collection name
+        const isHybrid = this.getIsHybrid();
+        const collectionName = ProjectMetadataManager.generateCollectionName(
+            codebasePath,
+            isHybrid,
+            gitRepoIdentifier
+        );
+
+        if (gitRepoIdentifier) {
+            console.log(`[Context] 🏷️  Generated git-based collection name: ${collectionName}`);
+        } else {
+            console.log(`[Context] 🏷️  Generated path-based collection name: ${collectionName}`);
+        }
+
+        return collectionName;
     }
 
     /**
@@ -396,6 +398,22 @@ export class Context {
                 hashCache.save();
                 console.log('[Context] 💾 Hash cache saved');
             }
+
+            // Save or update project metadata
+            const projectMetadata = new ProjectMetadataManager(codebasePath);
+            const embeddingDimension = await this.embedding.detectDimension();
+            projectMetadata.initializeOrUpdate({
+                projectPath: path.resolve(codebasePath),
+                collectionName,
+                gitRepoIdentifier: undefined, // TODO: Add git detection if needed
+                isHybrid: this.getIsHybrid() === true,
+                embeddingModel: this.embedding.getProvider(),
+                embeddingDimension,
+                indexedFileCount: result.processedFiles + skippedFiles,
+                totalChunks: result.totalChunks
+            });
+            projectMetadata.save();
+            console.log('[Context] 💾 Project metadata saved');
 
             this.logger.info('Indexing completed!', {
                 processedFiles: result.processedFiles,
@@ -679,10 +697,16 @@ export class Context {
         await FileSynchronizer.deleteSnapshot(codebasePath);
 
         // Clear hash cache
-        progressCallback?.({ phase: 'Clearing hash cache...', current: 80, total: 100, percentage: 80 });
+        progressCallback?.({ phase: 'Clearing hash cache...', current: 70, total: 100, percentage: 70 });
         const hashCache = new SimpleHashCacheManager(codebasePath, collectionName);
         hashCache.clear();
         console.log('[Context] 🗑️  Hash cache cleared');
+
+        // Clear project metadata
+        progressCallback?.({ phase: 'Clearing project metadata...', current: 85, total: 100, percentage: 85 });
+        const projectMetadata = new ProjectMetadataManager(codebasePath);
+        projectMetadata.clear();
+        console.log('[Context] 🗑️  Project metadata cleared');
 
         progressCallback?.({ phase: 'Index cleared', current: 100, total: 100, percentage: 100 });
         console.log('[Context] ✅ Index data cleaned');

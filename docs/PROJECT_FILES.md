@@ -6,18 +6,69 @@ This document describes all files and directories that Claude Context creates in
 
 ## 📂 In Your Indexed Project Directory
 
-Claude Context creates a `.context/` directory in each indexed project to store incremental indexing cache:
+Claude Context creates a `.context/` directory in each indexed project:
 
 ```
 your-project/
-├── .context/                     # Claude Context cache directory
-│   └── file-hashes.json         # Incremental indexing hash cache
+├── .context/                     # Claude Context metadata and cache
+│   ├── project.json             # Project metadata (commit to git ✅)
+│   └── file-hashes.json         # Incremental indexing cache (gitignored ❌)
 ├── src/
 ├── package.json
 └── ...
 ```
 
-### `.context/file-hashes.json`
+### `.context/project.json` 📋 **Team Shareable**
+
+**Purpose**: Stores project-level metadata for team collaboration
+
+**Created**: Automatically on first successful index
+
+**Structure**:
+```json
+{
+  "version": "1.0",
+  "projectPath": "/absolute/path/to/project",
+  "collectionName": "hybrid_code_chunks_abc123",
+  "gitRepoIdentifier": "github.com/owner/repo",
+  "isHybrid": true,
+  "embeddingModel": "OpenAI",
+  "embeddingDimension": 2048,
+  "createdAt": 1704067200000,
+  "lastIndexed": 1704067200000,
+  "indexedFileCount": 1250,
+  "totalChunks": 45000
+}
+```
+
+**Key Fields**:
+- `collectionName`: The vector database collection name (most important!)
+- `embeddingModel`: Model used for embeddings
+- `embeddingDimension`: Vector dimension
+- `isHybrid`: Whether hybrid search (dense + sparse) is enabled
+
+**Size**: < 1 KB (tiny!)
+
+**Lifecycle**:
+- Created on first successful index
+- Updated after each successful indexing
+- Deleted when collection is cleared with `--clean`
+
+**Git Tracking**:
+- ✅ **SHOULD be committed** - Contains team-shareable configuration
+- Allows team members to use the same collection name
+- Essential for consistent vector database naming
+- Added to `.gitignore` with exception: `!.context/project.json`
+
+**Team Benefits**:
+- Everyone uses the same `collectionName`
+- No need to manually synchronize collection names
+- Easier to share indexed projects
+- Configuration validation (warns if local settings differ)
+
+---
+
+### `.context/file-hashes.json` 🔒 **Local Only**
 
 **Purpose**: Stores file-level hashes for incremental indexing
 
@@ -53,8 +104,9 @@ your-project/
 - Deleted when collection is dropped (via interactive mode `drop` command)
 
 **Git Tracking**:
-- ✅ **Should be ignored** - Already added to `.gitignore` as `.context/`
-- This is project-specific cache data that should not be committed
+- ❌ **Should be ignored** - Already in `.gitignore`
+- This is local cache data specific to your environment
+- Each developer maintains their own hash cache
 
 ---
 
@@ -234,22 +286,31 @@ CACHE_DIR=/custom/path/to/cache
 ## ❓ FAQ
 
 **Q: Should I commit `.context/` to git?**
-A: No, it's cache data specific to your local environment. Already in `.gitignore`.
+A: **Partially** - Commit `project.json` (contains collection name), but NOT `file-hashes.json` (local cache).
+
+**Q: Why commit `project.json`?**
+A: So team members use the same vector database collection name automatically. This prevents confusion and duplicate collections.
 
 **Q: Can I delete `.context/` safely?**
-A: Yes, it will be regenerated on next index. You'll lose incremental indexing benefits temporarily.
+A: Yes, but you'll need to re-index. If you delete `project.json`, a new collection name will be generated.
 
-**Q: How do I move a project?**
-A: Just move the project directory. The cache uses relative paths and will work automatically.
+**Q: How do I move a project to a new location?**
+A: Just move it! `project.json` will auto-update the path. The collection name stays the same.
 
-**Q: What happens if cache is out of sync?**
-A: Use `--clean` flag to rebuild: `npm run index:project /path/to/project --clean`
+**Q: What happens if my teammate has different embedding settings?**
+A: Claude Context will warn you about mismatches (model, dimension, hybrid mode) but will still work.
 
-**Q: Can I share cache between team members?**
-A: No, cache is environment-specific. Each developer should index independently.
+**Q: Can team members share the same collection?**
+A: Yes! That's the point of `project.json`. Everyone points to the same collection in the vector database.
+
+**Q: What if I lose `project.json`?**
+A: A new collection name will be generated. You can manually restore it or re-index with `--clean`.
 
 **Q: Does cache affect search results?**
 A: No, cache only speeds up indexing. Search results come from the vector database.
+
+**Q: How do I force a new collection name?**
+A: Delete `.context/project.json` and run `--clean` to generate a new one.
 
 ---
 

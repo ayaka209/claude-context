@@ -661,6 +661,10 @@ claude-context> exit
 👋 Goodbye!
 ```
 
+**📚 Detailed Documentation:**
+- [Interactive Mode Guide](docs/advanced/manual-query-interactive.md) - Complete interactive mode reference
+- [CLI Tool Guide](docs/advanced/manual-query-cli.md) - Command-line automation and scripting
+
 ### Indexing Management
 
 Control indexing operations:

@@ -119,9 +119,10 @@ ${colorize('Query Operations:', 'yellow')}
 
 ${colorize('Management Operations:', 'yellow')}
   ${colorize('drop <collection>', 'green')}             - Drop/delete a collection (DANGEROUS)
-  ${colorize('clearindex <project-path>', 'green')}     - Clear project index (collection + cache)
-  ${colorize('reindex <project-path>', 'green')}        - Re-index a project (clears and rebuilds)
-  ${colorize('project <project-path>', 'green')}        - Show project metadata (.context/project.json)
+  ${colorize('index [project-path]', 'green')}          - Index a project (incremental, uses working dir if omitted)
+  ${colorize('reindex [project-path]', 'green')}        - Re-index a project (clears and rebuilds, uses working dir if omitted)
+  ${colorize('clearindex [project-path]', 'green')}     - Clear project index (collection + cache, uses working dir if omitted)
+  ${colorize('project [project-path]', 'green')}        - Show project metadata (.context/project.json, uses working dir if omitted)
 
 ${colorize('Utility Commands:', 'yellow')}
   ${colorize('cd <project-path>', 'green')}             - Set working directory for project operations
@@ -140,9 +141,10 @@ ${colorize('Examples:', 'yellow')}
   ${colorize('> search hybrid_code_chunks_abc123 function definition', 'blue')}
   ${colorize('> find hybrid_code_chunks_abc123 error handling', 'blue')}
   ${colorize('> drop hybrid_code_chunks_abc123', 'blue')}
-  ${colorize('> clearindex /path/to/project', 'blue')}
-  ${colorize('> reindex /path/to/project', 'blue')}
-  ${colorize('> project /path/to/project', 'blue')}
+  ${colorize('> cd /path/to/project', 'blue')}
+  ${colorize('> index', 'blue')}
+  ${colorize('> reindex', 'blue')}
+  ${colorize('> project', 'blue')}
     `);
 }
 
@@ -584,6 +586,80 @@ async function handleClearIndex(projectPath) {
     }
 }
 
+async function handleIndex(projectPath) {
+    // Use working directory if no path provided
+    if (!projectPath) {
+        if (!workingDirectory) {
+            console.error(colorize('Usage: index <project_path>', 'red'));
+            console.error(colorize('   Or set working directory first with: cd <project_path>', 'yellow'));
+            return;
+        }
+        projectPath = workingDirectory;
+    }
+
+    try {
+        // Validate project path
+        const resolvedPath = path.resolve(projectPath);
+        if (!fs.existsSync(resolvedPath)) {
+            console.error(colorize(`Error: Project path does not exist: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        if (!fs.statSync(resolvedPath).isDirectory()) {
+            console.error(colorize(`Error: Path is not a directory: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        console.log(colorize(`Project path: ${resolvedPath}`, 'blue'));
+
+        // Get the collection name that would be used for this project
+        const collectionName = context.getCollectionName(resolvedPath);
+        console.log(colorize(`Collection name: ${collectionName}`, 'blue'));
+
+        // Check if collection exists
+        const exists = await vectorDatabase.hasCollection(collectionName);
+        if (exists) {
+            console.log(colorize(`Collection '${collectionName}' already exists - using incremental indexing`, 'cyan'));
+        } else {
+            console.log(colorize(`Collection '${collectionName}' will be created`, 'cyan'));
+        }
+
+        // Confirm before indexing
+        return new Promise((resolve) => {
+            rl.question(colorize(`Index project '${path.basename(resolvedPath)}'? (yes/NO): `, 'yellow'), async (answer) => {
+                if (answer.toLowerCase() === 'yes') {
+                    try {
+                        console.log(colorize('\nStarting indexing process...', 'bright'));
+                        console.log(colorize('This may take several minutes depending on project size.\n', 'yellow'));
+
+                        // Index the project (incremental if already indexed)
+                        console.log(colorize(`Indexing project: ${resolvedPath}`, 'blue'));
+                        const startTime = Date.now();
+
+                        const result = await context.indexCodebase(resolvedPath);
+
+                        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                        console.log(colorize(`\nIndexing completed successfully in ${duration}s!`, 'green'));
+                        console.log(colorize(`Collection: ${collectionName}`, 'cyan'));
+                        console.log(colorize(`Indexed files: ${result.indexedFiles}`, 'cyan'));
+                        console.log(colorize(`Total chunks: ${result.totalChunks}`, 'cyan'));
+                    } catch (error) {
+                        console.error(colorize(`\nError during indexing: ${error.message}`, 'red'));
+                        if (error.stack) {
+                            console.error(colorize(`Stack trace: ${error.stack}`, 'red'));
+                        }
+                    }
+                } else {
+                    console.log(colorize('Operation cancelled', 'yellow'));
+                }
+                resolve();
+            });
+        });
+    } catch (error) {
+        console.error(colorize(`Error: ${error.message}`, 'red'));
+    }
+}
+
 async function handleReindex(projectPath) {
     // Use working directory if no path provided
     if (!projectPath) {
@@ -728,6 +804,10 @@ async function processCommand(input) {
 
         case 'drop':
             await handleDrop(args[0]);
+            break;
+
+        case 'index':
+            await handleIndex(args.slice(0).join(' '));
             break;
 
         case 'reindex':

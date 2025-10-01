@@ -644,7 +644,10 @@ You can also execute commands directly without entering interactive mode:
 # View project metadata
 npm run query project /path/to/your/project
 
-# Re-index a project
+# Index a project (incremental)
+npm run query index /path/to/your/project
+
+# Re-index a project (force rebuild)
 npm run query reindex /path/to/your/project
 
 # Clear project index completely (for testing)
@@ -688,8 +691,9 @@ npm run query -- -C /path/to/your/project
 - `query <collection> [filter]` - Query with optional filter
 - `search <collection> <query>` - Hybrid search
 - `drop <collection>` - Drop/delete a collection (requires confirmation)
-- `reindex [project-path]` - Re-index a project (uses working directory if path omitted)
-- `clearindex [project-path]` - Clear project index completely (uses working directory if path omitted)
+- `index [project-path]` - Index a project incrementally (uses working directory if path omitted)
+- `reindex [project-path]` - Re-index a project completely (clears and rebuilds, uses working directory if path omitted)
+- `clearindex [project-path]` - Clear project index completely (collection + cache + metadata, uses working directory if path omitted)
 - `project [project-path]` - Show project metadata and git tracking status (uses working directory if path omitted)
 - `cd <project-path>` - Set working directory for project operations
 - `pwd` - Show current working directory
@@ -722,16 +726,19 @@ claude-context> search hybrid_code_chunks_git_github_com_myrepo_abc123 error han
 ✅ Found 3 results with scores and content preview
 
 claude-context> cd /another/project
-✅ Working directory set to: /another/project
+Working directory set to: /another/project
 
 claude-context> pwd
-📂 Current working directory: /another/project
+Current working directory: /another/project
+
+claude-context> index
+# Incrementally indexes /another/project (only changed files)
 
 claude-context> reindex
-# Re-indexes /another/project without typing the path
+# Force re-indexes /another/project (clears and rebuilds all)
 
 claude-context> exit
-👋 Goodbye!
+Goodbye!
 ```
 
 **📚 Detailed Documentation:**

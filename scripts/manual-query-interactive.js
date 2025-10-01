@@ -119,6 +119,7 @@ ${colorize('Query Operations:', 'yellow')}
 ${colorize('Management Operations:', 'yellow')}
   ${colorize('drop <collection>', 'green')}             - Drop/delete a collection (⚠️  DANGEROUS)
   ${colorize('reindex <project-path>', 'green')}        - Re-index a project (clears and rebuilds)
+  ${colorize('project <project-path>', 'green')}        - Show project metadata (.context/project.json)
 
 ${colorize('Utility Commands:', 'yellow')}
   ${colorize('limit <number>', 'green')}                - Set result limit (default: 10)
@@ -136,6 +137,7 @@ ${colorize('Examples:', 'yellow')}
   ${colorize('> find hybrid_code_chunks_abc123 error handling', 'blue')}
   ${colorize('> drop hybrid_code_chunks_abc123', 'blue')}
   ${colorize('> reindex /path/to/project', 'blue')}
+  ${colorize('> project /path/to/project', 'blue')}
     `);
 }
 
@@ -339,6 +341,93 @@ async function handleDrop(collection) {
     }
 }
 
+async function handleProject(projectPath) {
+    if (!projectPath) {
+        console.error(colorize('❌ Usage: project <project_path>', 'red'));
+        return;
+    }
+
+    try {
+        // Validate project path
+        const resolvedPath = path.resolve(projectPath);
+        if (!fs.existsSync(resolvedPath)) {
+            console.error(colorize(`❌ Error: Project path does not exist: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        if (!fs.statSync(resolvedPath).isDirectory()) {
+            console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        // Check for .context/project.json
+        const projectJsonPath = path.join(resolvedPath, '.context', 'project.json');
+        if (!fs.existsSync(projectJsonPath)) {
+            console.log(colorize(`\n⚠️  No project metadata found at: ${projectJsonPath}`, 'yellow'));
+            console.log(colorize('This project has not been indexed yet.', 'yellow'));
+            console.log(colorize(`\nTo index this project, use: ${colorize('reindex ' + projectPath, 'cyan')}`, 'blue'));
+            return;
+        }
+
+        // Read and parse project.json
+        const projectData = JSON.parse(fs.readFileSync(projectJsonPath, 'utf-8'));
+
+        // Display project metadata
+        console.log(`\n${colorize('═══════════════════════════════════════════', 'cyan')}`);
+        console.log(colorize('📦 Project Metadata', 'bright'));
+        console.log(colorize('═══════════════════════════════════════════', 'cyan'));
+        console.log();
+
+        console.log(colorize('Basic Information:', 'yellow'));
+        console.log(`  ${colorize('Project Path:', 'cyan')} ${projectData.projectPath || 'N/A'}`);
+        console.log(`  ${colorize('Collection Name:', 'cyan')} ${projectData.collectionName || 'N/A'}`);
+        console.log(`  ${colorize('Version:', 'cyan')} ${projectData.version || 'N/A'}`);
+        console.log();
+
+        console.log(colorize('Embedding Configuration:', 'yellow'));
+        console.log(`  ${colorize('Model:', 'cyan')} ${projectData.embeddingModel || 'N/A'}`);
+        console.log(`  ${colorize('Dimension:', 'cyan')} ${projectData.embeddingDimension || 'N/A'}`);
+        console.log(`  ${colorize('Hybrid Mode:', 'cyan')} ${projectData.isHybrid ? colorize('Yes', 'green') : colorize('No', 'red')}`);
+        console.log();
+
+        console.log(colorize('Indexing Statistics:', 'yellow'));
+        console.log(`  ${colorize('Files Indexed:', 'cyan')} ${projectData.indexedFileCount || 'N/A'}`);
+        console.log(`  ${colorize('Total Chunks:', 'cyan')} ${projectData.totalChunks || 'N/A'}`);
+        console.log();
+
+        console.log(colorize('Timestamps:', 'yellow'));
+        if (projectData.createdAt) {
+            const createdDate = new Date(projectData.createdAt);
+            console.log(`  ${colorize('Created:', 'cyan')} ${createdDate.toLocaleString()}`);
+        }
+        if (projectData.lastIndexed) {
+            const lastIndexedDate = new Date(projectData.lastIndexed);
+            console.log(`  ${colorize('Last Indexed:', 'cyan')} ${lastIndexedDate.toLocaleString()}`);
+        }
+        console.log();
+
+        if (projectData.gitRepoIdentifier) {
+            console.log(colorize('Git Information:', 'yellow'));
+            console.log(`  ${colorize('Repository:', 'cyan')} ${projectData.gitRepoIdentifier}`);
+            console.log();
+        }
+
+        // Check if collection exists in database
+        const exists = await vectorDatabase.hasCollection(projectData.collectionName);
+        console.log(colorize('Collection Status:', 'yellow'));
+        if (exists) {
+            console.log(`  ${colorize('✅ Collection exists in vector database', 'green')}`);
+        } else {
+            console.log(`  ${colorize('⚠️  Collection not found in vector database', 'red')}`);
+            console.log(`  ${colorize('The metadata exists but the collection may have been deleted.', 'yellow')}`);
+        }
+        console.log();
+
+    } catch (error) {
+        console.error(colorize(`❌ Error reading project metadata: ${error.message}`, 'red'));
+    }
+}
+
 async function handleReindex(projectPath) {
     if (!projectPath) {
         console.error(colorize('❌ Usage: reindex <project_path>', 'red'));
@@ -474,6 +563,10 @@ async function processCommand(input) {
 
         case 'reindex':
             await handleReindex(args.slice(0).join(' '));
+            break;
+
+        case 'project':
+            await handleProject(args.slice(0).join(' '));
             break;
 
         default:

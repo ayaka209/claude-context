@@ -785,6 +785,97 @@ npm run logs:clean
 rm -rf ~/.context/
 ```
 
+### Project-Level `.context/` Directory
+
+In addition to the global configuration directory, Claude Context creates a `.context/` directory **in each indexed project** to store project-specific metadata and cache:
+
+```
+your-project/
+├── .context/                     # Project-level metadata (created on first index)
+│   ├── project.json             # Project metadata (commit to git ✅)
+│   └── file-hashes.json         # Incremental indexing cache (gitignored ❌)
+├── src/
+├── package.json
+└── .gitignore
+```
+
+#### Files Created
+
+**`.context/project.json`** - Team-Shareable Metadata (< 1 KB)
+- **Purpose**: Stores project-level configuration for team collaboration
+- **Contains**:
+  - Collection name (most important for team sharing)
+  - Embedding model and dimension
+  - Hybrid search mode setting
+  - Index statistics and timestamps
+- **Git Tracking**: ✅ **SHOULD be committed** to ensure team members use the same collection name
+- **Lifecycle**: Created on first index, updated on each reindex, deleted with `--clean`
+
+**`.context/file-hashes.json`** - Local Cache (10-100 KB)
+- **Purpose**: Stores SHA256 hashes of files for incremental indexing (90%+ cost savings)
+- **Contains**: File hashes, modification timestamps, chunk counts
+- **Git Tracking**: ❌ **Should NOT be committed** (already in `.gitignore`)
+- **Lifecycle**: Created on first index, updated incrementally, deleted with `--clean`
+
+#### Git Configuration
+
+The `.context/` directory is **partially tracked** by git:
+
+```gitignore
+# In your project's .gitignore (already handled by Claude Context)
+.context/
+!.context/project.json
+```
+
+This ensures:
+- ✅ `project.json` is shared with your team (consistent collection names)
+- ❌ `file-hashes.json` stays local (environment-specific cache)
+
+#### Why Commit `project.json`?
+
+When you commit `.context/project.json`, your team benefits from:
+- **Consistent Collection Names**: Everyone uses the same vector database collection
+- **Configuration Validation**: Warns if local settings differ from project metadata
+- **No Manual Coordination**: No need to manually share collection names
+- **Easier Onboarding**: New team members can immediately query the existing index
+
+#### Viewing Project Metadata
+
+Use the interactive query tool to inspect project metadata:
+
+```bash
+npm run manual-query:interactive
+
+# In the interactive prompt:
+> project /path/to/your/project
+```
+
+This displays:
+- Collection name and version
+- Embedding model configuration
+- Indexing statistics (files, chunks)
+- Creation and last indexed timestamps
+- Git repository identifier (if available)
+- Collection existence status in vector database
+
+#### Manual Cleanup
+
+```bash
+# Remove project-specific cache only
+rm -rf your-project/.context/
+
+# This will:
+# - Delete project metadata
+# - Delete hash cache
+# - Force full reindex on next run
+# - Regenerate a new collection name (unless you restore project.json)
+```
+
+⚠️ **Important**: If you delete `.context/project.json`, a new collection name will be generated on the next index. To preserve the collection name, either:
+1. Keep `project.json` in git (recommended)
+2. Manually back up and restore the file
+3. Use the same collection name explicitly in configuration
+
 ---
 
 ### Environment Variables Configuration

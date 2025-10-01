@@ -423,6 +423,48 @@ async function handleProject(projectPath) {
         }
         console.log();
 
+        // Check if project.json is tracked by git
+        const { execSync } = require('child_process');
+        try {
+            // Check if directory is a git repository
+            execSync('git rev-parse --git-dir', { cwd: resolvedPath, stdio: 'ignore' });
+
+            // Check if .context/project.json is tracked by git
+            const relativePath = '.context/project.json';
+            const gitStatus = execSync(`git ls-files --error-unmatch "${relativePath}"`, {
+                cwd: resolvedPath,
+                stdio: 'pipe',
+                encoding: 'utf-8'
+            }).trim();
+
+            if (gitStatus) {
+                console.log(colorize('Git Tracking:', 'yellow'));
+                console.log(`  ${colorize('✅ project.json is tracked in git (recommended for team collaboration)', 'green')}`);
+                console.log();
+            }
+        } catch (gitError) {
+            // Git command failed - either not a git repo or file is not tracked
+            try {
+                // Verify it's actually a git repo
+                execSync('git rev-parse --git-dir', { cwd: resolvedPath, stdio: 'ignore' });
+
+                // It's a git repo but file is not tracked
+                console.log(colorize('Git Tracking:', 'yellow'));
+                console.log(`  ${colorize('⚠️  project.json is NOT tracked in git', 'red')}`);
+                console.log();
+                console.log(colorize('💡 Recommendation:', 'bright'));
+                console.log(`  ${colorize('Consider committing .context/project.json to git for team collaboration.', 'yellow')}`);
+                console.log(`  ${colorize('This ensures all team members use the same collection name.', 'yellow')}`);
+                console.log();
+                console.log(colorize('To track it:', 'cyan'));
+                console.log(`  ${colorize('git add .context/project.json', 'blue')}`);
+                console.log(`  ${colorize('git commit -m "chore: Add Claude Context project metadata"', 'blue')}`);
+                console.log();
+            } catch (notGitRepoError) {
+                // Not a git repository, skip git tracking check silently
+            }
+        }
+
     } catch (error) {
         console.error(colorize(`❌ Error reading project metadata: ${error.message}`, 'red'));
     }

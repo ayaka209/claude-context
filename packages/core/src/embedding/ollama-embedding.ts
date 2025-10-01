@@ -62,7 +62,7 @@ export class OllamaEmbedding extends Embedding {
         if (!this.dimensionDetected && !this.config.dimension) {
             this.dimension = await this.detectDimension();
             this.dimensionDetected = true;
-            console.log(`[OllamaEmbedding] 📏 Detected Ollama embedding dimension: ${this.dimension} for model: ${this.config.model}`);
+            console.log(`[OllamaEmbedding] Detected Ollama embedding dimension: ${this.dimension} for model: ${this.config.model}`);
         }
 
         const embedOptions: any = {
@@ -96,7 +96,7 @@ export class OllamaEmbedding extends Embedding {
         if (!this.dimensionDetected && !this.config.dimension) {
             this.dimension = await this.detectDimension();
             this.dimensionDetected = true;
-            console.log(`[OllamaEmbedding] 📏 Detected Ollama embedding dimension: ${this.dimension} for model: ${this.config.model}`);
+            console.log(`[OllamaEmbedding] Detected Ollama embedding dimension: ${this.dimension} for model: ${this.config.model}`);
         }
 
         // Use Ollama's native batch embedding API
@@ -145,7 +145,7 @@ export class OllamaEmbedding extends Embedding {
         if (!this.config.dimension) {
             this.dimension = await this.detectDimension();
             this.dimensionDetected = true;
-            console.log(`[OllamaEmbedding] 📏 Detected Ollama embedding dimension: ${this.dimension} for model: ${this.config.model}`);
+            console.log(`[OllamaEmbedding] Detected Ollama embedding dimension: ${this.dimension} for model: ${this.config.model}`);
         } else {
             console.log('[OllamaEmbedding] Dimension already detected for model ' + this.config.model);
         }

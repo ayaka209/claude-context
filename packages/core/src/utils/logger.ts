@@ -162,7 +162,7 @@ export class IndexLogger {
             }
 
             if (deletedCount > 0) {
-                console.log(`🧹 Cleaned ${deletedCount} old log files`);
+                console.log(`[Logger] Cleaned ${deletedCount} old log files`);
             }
         } catch (error) {
             console.warn(`Error cleaning log files: ${(error as Error).message}`);

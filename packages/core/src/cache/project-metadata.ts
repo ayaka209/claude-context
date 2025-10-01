@@ -93,7 +93,7 @@ export class ProjectMetadataManager {
                 JSON.stringify(this.metadata, null, 2),
                 'utf-8'
             );
-            console.log('[ProjectMetadata] 💾 Metadata saved');
+            console.log('[ProjectMetadata] Metadata saved');
         } catch (error) {
             console.error('[ProjectMetadata] Failed to save metadata:', error);
         }
@@ -106,7 +106,7 @@ export class ProjectMetadataManager {
         if (fs.existsSync(this.metadataFilePath)) {
             try {
                 fs.unlinkSync(this.metadataFilePath);
-                console.log('[ProjectMetadata] ✅ Metadata cleared');
+                console.log('[ProjectMetadata] Metadata cleared');
             } catch (error) {
                 console.error('[ProjectMetadata] Failed to clear metadata:', error);
             }

@@ -47,12 +47,12 @@ export class AstCodeSplitter implements Splitter {
         // Check if language is supported by AST splitter
         const langConfig = this.getLanguageConfig(language);
         if (!langConfig) {
-            console.log(`📝 Language ${language} not supported by AST, using LangChain splitter for: ${filePath || 'unknown'}`);
+            console.log(`[AstSplitter] Language ${language} not supported by AST, using LangChain splitter for: ${filePath || 'unknown'}`);
             return await this.langchainFallback.split(code, language, filePath);
         }
 
         try {
-            console.log(`🌳 Using AST splitter for ${language} file: ${filePath || 'unknown'}`);
+            console.log(`[AstSplitter] Using AST splitter for ${language} file: ${filePath || 'unknown'}`);
 
             this.parser.setLanguage(langConfig.parser);
             const tree = this.parser.parse(code);

@@ -297,11 +297,11 @@ export class ClusterManager {
             if (clustersResponse.clusters.length > 0) {
                 // Use the first available cluster
                 const cluster = clustersResponse.clusters[0];
-                console.log(`🎯 Using existing cluster: ${cluster.clusterName} (${cluster.clusterId})`);
+                console.log(`[ZillizUtils] Using existing cluster: ${cluster.clusterName} (${cluster.clusterId})`);
                 return cluster.connectAddress;
             } else {
                 // No clusters found, create a free cluster
-                console.log('📝 No clusters found, creating a new free cluster...');
+                console.log('[ZillizUtils] No clusters found, creating a new free cluster...');
                 const createResponse = await clusterManager.createFreeCluster({
                     clusterName: `auto-cluster-${Date.now()}`,
                     projectId: defaultProject.projectId,

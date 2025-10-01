@@ -93,7 +93,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             });
 
             if (result.state !== LoadState.LoadStateLoaded) {
-                console.log(`[MilvusDB] 🔄 Loading collection '${collectionName}' to memory...`);
+                console.log(`[MilvusDB] Loading collection '${collectionName}' to memory...`);
                 await this.client.loadCollection({
                     collection_name: collectionName,
                 });
@@ -133,8 +133,8 @@ export class MilvusVectorDatabase implements VectorDatabase {
                 });
 
                 // Debug logging to understand the progress
-                console.log(`[MilvusDB] 📊 Index build progress for '${fieldName}': indexed_rows=${indexBuildProgress.indexed_rows}, total_rows=${indexBuildProgress.total_rows}`);
-                console.log(`[MilvusDB] 📊 Full response:`, JSON.stringify(indexBuildProgress));
+                console.log(`[MilvusDB] Index build progress for '${fieldName}': indexed_rows=${indexBuildProgress.indexed_rows}, total_rows=${indexBuildProgress.total_rows}`);
+                console.log(`[MilvusDB] Full response:`, JSON.stringify(indexBuildProgress));
 
                 // Check if index building is complete
                 if (indexBuildProgress.indexed_rows === indexBuildProgress.total_rows) {
@@ -153,7 +153,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
                     throw new Error(`Index creation failed for field '${fieldName}' in collection '${collectionName}': ${indexBuildProgress.status.reason}`);
                 }
 
-                console.log(`[MilvusDB] 📊 Index building in progress: ${indexBuildProgress.indexed_rows}/${indexBuildProgress.total_rows} rows indexed`);
+                console.log(`[MilvusDB] Index building in progress: ${indexBuildProgress.indexed_rows}/${indexBuildProgress.total_rows} rows indexed`);
 
                 // Wait with exponential backoff
                 await new Promise(resolve => setTimeout(resolve, interval));
@@ -187,7 +187,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
 
         while (attempt <= maxRetries) {
             try {
-                console.log(`[MilvusDB] 🔄 Loading collection '${collectionName}' to memory (attempt ${attempt}/${maxRetries})...`);
+                console.log(`[MilvusDB] Loading collection '${collectionName}' to memory (attempt ${attempt}/${maxRetries})...`);
 
                 await this.client.loadCollection({
                     collection_name: collectionName,
@@ -288,7 +288,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             metric_type: MetricType.COSINE,
         };
 
-        console.log(`[MilvusDB] 🔧 Creating index for field 'vector' in collection '${collectionName}'...`);
+        console.log(`[MilvusDB] Creating index for field 'vector' in collection '${collectionName}'...`);
         await this.client.createIndex(indexParams);
 
         // Wait for index to be ready before loading collection
@@ -363,7 +363,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
         }));
 
         try {
-            console.log(`[MilvusDB] 🚀 Starting to insert ${documents.length} documents into collection ${collectionName}`);
+            console.log(`[MilvusDB] Starting to insert ${documents.length} documents into collection ${collectionName}`);
 
             const result = await this.client.insert({
                 collection_name: collectionName,
@@ -373,11 +373,11 @@ export class MilvusVectorDatabase implements VectorDatabase {
             // Check if insertion was successful
             if (result.status?.error_code !== 'Success' && result.status?.error_code !== 0) {
                 const errorMsg = `Vector database insert failed: ${result.status?.reason || 'Unknown error'}`;
-                console.error(`[MilvusDB] ❌ ${errorMsg}`);
+                console.error(`[MilvusDB] ${errorMsg}`);
                 throw new Error(errorMsg);
             }
 
-            console.log(`[MilvusDB] ✅ Successfully inserted ${documents.length} documents`);
+            console.log(`[MilvusDB] Successfully inserted ${documents.length} documents`);
 
             // 验证步骤：插入后立即查询验证数据是否写入成功
             await this.verifyInsertedData(collectionName, documents.length);
@@ -575,7 +575,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             index_type: 'AUTOINDEX',
             metric_type: MetricType.COSINE,
         };
-        console.log(`[MilvusDB] 🔧 Creating dense vector index for field 'vector' in collection '${collectionName}'...`);
+        console.log(`[MilvusDB] Creating dense vector index for field 'vector' in collection '${collectionName}'...`);
         await this.client.createIndex(denseIndexParams);
 
         // Wait for dense vector index to be ready
@@ -589,7 +589,7 @@ export class MilvusVectorDatabase implements VectorDatabase {
             index_type: 'SPARSE_INVERTED_INDEX',
             metric_type: MetricType.BM25,
         };
-        console.log(`[MilvusDB] 🔧 Creating sparse vector index for field 'sparse_vector' in collection '${collectionName}'...`);
+        console.log(`[MilvusDB] Creating sparse vector index for field 'sparse_vector' in collection '${collectionName}'...`);
 
         await this.client.createIndex(sparseIndexParams);
 

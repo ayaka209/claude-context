@@ -78,7 +78,7 @@ export class SimpleHashCacheManager {
         if (fs.existsSync(this.cacheFilePath)) {
             try {
                 fs.unlinkSync(this.cacheFilePath);
-                console.log('[HashCache] ✅ File hash cache cleared');
+                console.log('[HashCache] File hash cache cleared');
             } catch (error) {
                 console.error('[HashCache] Failed to clear:', error);
             }

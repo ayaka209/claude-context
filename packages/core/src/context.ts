@@ -149,12 +149,12 @@ export class Context {
         // Remove duplicates
         this.ignorePatterns = [...new Set(allIgnorePatterns)];
 
-        console.log(`[Context] 🔧 Initialized with ${this.supportedExtensions.length} supported extensions and ${this.ignorePatterns.length} ignore patterns`);
+        console.log(`[Context] Initialized with ${this.supportedExtensions.length} supported extensions and ${this.ignorePatterns.length} ignore patterns`);
         if (envCustomExtensions.length > 0) {
-            console.log(`[Context] 📎 Loaded ${envCustomExtensions.length} custom extensions from environment: ${envCustomExtensions.join(', ')}`);
+            console.log(`[Context] Loaded ${envCustomExtensions.length} custom extensions from environment: ${envCustomExtensions.join(', ')}`);
         }
         if (envCustomIgnorePatterns.length > 0) {
-            console.log(`[Context] 🚫 Loaded ${envCustomIgnorePatterns.length} custom ignore patterns from environment: ${envCustomIgnorePatterns.join(', ')}`);
+            console.log(`[Context] Loaded ${envCustomIgnorePatterns.length} custom ignore patterns from environment: ${envCustomIgnorePatterns.join(', ')}`);
         }
     }
 
@@ -242,7 +242,7 @@ export class Context {
         const existingCollectionName = projectMetadata.getCollectionName();
 
         if (existingCollectionName) {
-            console.log(`[Context] 📖 Using collection name from project metadata: ${existingCollectionName}`);
+            console.log(`[Context] Using collection name from project metadata: ${existingCollectionName}`);
             return existingCollectionName;
         }
 
@@ -255,9 +255,9 @@ export class Context {
         );
 
         if (gitRepoIdentifier) {
-            console.log(`[Context] 🏷️  Generated git-based collection name: ${collectionName}`);
+            console.log(`[Context] Generated git-based collection name: ${collectionName}`);
         } else {
-            console.log(`[Context] 🏷️  Generated path-based collection name: ${collectionName}`);
+            console.log(`[Context] Generated path-based collection name: ${collectionName}`);
         }
 
         return collectionName;
@@ -323,7 +323,7 @@ export class Context {
                     cachedChunks: stats.totalChunks,
                     lastIndexed: stats.lastIndexed
                 });
-                console.log(`[Context] 📊 Hash cache: ${stats.totalFiles} files, ${stats.totalChunks} chunks (last indexed: ${stats.lastIndexed.toLocaleString()})`);
+                console.log(`[Context] Hash cache: ${stats.totalFiles} files, ${stats.totalChunks} chunks (last indexed: ${stats.lastIndexed.toLocaleString()})`);
 
                 // Filter files based on hash
                 const filesToIndex: string[] = [];
@@ -345,18 +345,18 @@ export class Context {
                 }
 
                 codeFiles = filesToIndex;
-                console.log(`[Context] ⚡ Incremental: ${filesToIndex.length} changed, ${skippedFiles} unchanged (${Math.round(skippedFiles/allCodeFiles.length*100)}% skipped)`);
+                console.log(`[Context] Incremental: ${filesToIndex.length} changed, ${skippedFiles} unchanged (${Math.round(skippedFiles/allCodeFiles.length*100)}% skipped)`);
                 this.logger.info(`Incremental filtering complete`, {
                     totalFiles: allCodeFiles.length,
                     changedFiles: filesToIndex.length,
                     skippedFiles
                 });
             } else if (forceReindex) {
-                console.log('[Context] 🔄 Force reindex: processing all files');
+                console.log('[Context] Force reindex: processing all files');
             }
 
             if (codeFiles.length === 0) {
-                console.log('[Context] ✅ No files to index (all unchanged)');
+                console.log('[Context] No files to index (all unchanged)');
                 if (hashCache) hashCache.save();
                 return { indexedFiles: 0, totalChunks: 0, status: 'completed' };
             }
@@ -396,7 +396,7 @@ export class Context {
             // Save hash cache
             if (hashCache) {
                 hashCache.save();
-                console.log('[Context] 💾 Hash cache saved');
+                console.log('[Context] Hash cache saved');
             }
 
             // Save or update project metadata
@@ -413,7 +413,7 @@ export class Context {
                 totalChunks: result.totalChunks
             });
             projectMetadata.save();
-            console.log('[Context] 💾 Project metadata saved');
+            console.log('[Context] Project metadata saved');
 
             this.logger.info('Indexing completed!', {
                 processedFiles: result.processedFiles,
@@ -423,7 +423,7 @@ export class Context {
             });
 
             if (skippedFiles > 0) {
-                console.log(`[Context] ⚡ Performance: Skipped ${skippedFiles} unchanged files (saved ~${Math.round(skippedFiles * 100 / allCodeFiles.length)}% embedding cost)`);
+                console.log(`[Context] Performance: Skipped ${skippedFiles} unchanged files (saved ~${Math.round(skippedFiles * 100 / allCodeFiles.length)}% embedding cost)`);
             }
 
             progressCallback?.({
@@ -480,7 +480,7 @@ export class Context {
             return { added: 0, removed: 0, modified: 0 };
         }
 
-        console.log(`[Context] 🔄 Found changes: ${added.length} added, ${removed.length} removed, ${modified.length} modified.`);
+        console.log(`[Context] Found changes: ${added.length} added, ${removed.length} removed, ${modified.length} modified.`);
 
         let processedChanges = 0;
         const updateProgress = (phase: string) => {
@@ -679,7 +679,7 @@ export class Context {
         progressCallback?: (progress: { phase: string; current: number; total: number; percentage: number }) => void,
         gitRepoIdentifier?: string | null
     ): Promise<void> {
-        console.log(`[Context] 🧹 Cleaning index data for ${codebasePath}...`);
+        console.log(`[Context] Cleaning index data for ${codebasePath}...`);
 
         progressCallback?.({ phase: 'Checking existing index...', current: 0, total: 100, percentage: 0 });
 
@@ -700,16 +700,16 @@ export class Context {
         progressCallback?.({ phase: 'Clearing hash cache...', current: 70, total: 100, percentage: 70 });
         const hashCache = new SimpleHashCacheManager(codebasePath, collectionName);
         hashCache.clear();
-        console.log('[Context] 🗑️  Hash cache cleared');
+        console.log('[Context] Hash cache cleared');
 
         // Clear project metadata
         progressCallback?.({ phase: 'Clearing project metadata...', current: 85, total: 100, percentage: 85 });
         const projectMetadata = new ProjectMetadataManager(codebasePath);
         projectMetadata.clear();
-        console.log('[Context] 🗑️  Project metadata cleared');
+        console.log('[Context] Project metadata cleared');
 
         progressCallback?.({ phase: 'Index cleared', current: 100, total: 100, percentage: 100 });
-        console.log('[Context] ✅ Index data cleaned');
+        console.log('[Context] Index data cleaned');
     }
 
     /**
@@ -723,7 +723,7 @@ export class Context {
         const patternSet = new Set(mergedPatterns);
         patternSet.forEach(pattern => uniquePatterns.push(pattern));
         this.ignorePatterns = uniquePatterns;
-        console.log(`[Context] 🚫 Updated ignore patterns: ${ignorePatterns.length} new + ${DEFAULT_IGNORE_PATTERNS.length} default = ${this.ignorePatterns.length} total patterns`);
+        console.log(`[Context] Updated ignore patterns: ${ignorePatterns.length} new + ${DEFAULT_IGNORE_PATTERNS.length} default = ${this.ignorePatterns.length} total patterns`);
     }
 
     /**
@@ -739,7 +739,7 @@ export class Context {
         const patternSet = new Set(mergedPatterns);
         patternSet.forEach(pattern => uniquePatterns.push(pattern));
         this.ignorePatterns = uniquePatterns;
-        console.log(`[Context] 🚫 Added ${customPatterns.length} custom ignore patterns. Total: ${this.ignorePatterns.length} patterns`);
+        console.log(`[Context] Added ${customPatterns.length} custom ignore patterns. Total: ${this.ignorePatterns.length} patterns`);
     }
 
     /**
@@ -747,7 +747,7 @@ export class Context {
      */
     resetIgnorePatternsToDefaults(): void {
         this.ignorePatterns = [...DEFAULT_IGNORE_PATTERNS];
-        console.log(`[Context] 🔄 Reset ignore patterns to defaults: ${this.ignorePatterns.length} patterns`);
+        console.log(`[Context] Reset ignore patterns to defaults: ${this.ignorePatterns.length} patterns`);
     }
 
     /**
@@ -756,7 +756,7 @@ export class Context {
      */
     updateEmbedding(embedding: Embedding): void {
         this.embedding = embedding;
-        console.log(`[Context] 🔄 Updated embedding provider: ${embedding.getProvider()}`);
+        console.log(`[Context] Updated embedding provider: ${embedding.getProvider()}`);
     }
 
     /**
@@ -765,7 +765,7 @@ export class Context {
      */
     updateVectorDatabase(vectorDatabase: VectorDatabase): void {
         this.vectorDatabase = vectorDatabase;
-        console.log(`[Context] 🔄 Updated vector database`);
+        console.log(`[Context] Updated vector database`);
     }
 
     /**
@@ -774,7 +774,7 @@ export class Context {
      */
     updateSplitter(splitter: Splitter): void {
         this.codeSplitter = splitter;
-        console.log(`[Context] 🔄 Updated splitter instance`);
+        console.log(`[Context] Updated splitter instance`);
     }
 
     /**
@@ -783,7 +783,7 @@ export class Context {
     private async prepareCollection(codebasePath: string, forceReindex: boolean = false, gitRepoIdentifier?: string | null): Promise<void> {
         const isHybrid = this.getIsHybrid();
         const collectionType = isHybrid === true ? 'hybrid vector' : 'vector';
-        console.log(`[Context] 🔧 Preparing ${collectionType} collection for codebase: ${codebasePath}${forceReindex ? ' (FORCE REINDEX)' : ''}`);
+        console.log(`[Context] Preparing ${collectionType} collection for codebase: ${codebasePath}${forceReindex ? ' (FORCE REINDEX)' : ''}`);
         const collectionName = this.getCollectionName(codebasePath, gitRepoIdentifier);
 
         // Check if collection already exists
@@ -802,7 +802,7 @@ export class Context {
 
         console.log(`[Context] Detecting embedding dimension for ${this.embedding.getProvider()} provider...`);
         const dimension = await this.embedding.detectDimension();
-        console.log(`[Context] 📏 Detected dimension: ${dimension} for ${this.embedding.getProvider()}`);
+        console.log(`[Context] Detected dimension: ${dimension} for ${this.embedding.getProvider()}`);
         const dirName = path.basename(codebasePath);
 
         if (isHybrid === true) {
@@ -863,7 +863,7 @@ export class Context {
         const isHybrid = this.getIsHybrid();
         const EMBEDDING_BATCH_SIZE = Math.max(1, parseInt(envManager.get('EMBEDDING_BATCH_SIZE') || '100', 10));
         const CHUNK_LIMIT = 450000;
-        console.log(`[Context] 🔧 Using EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE}`);
+        console.log(`[Context] Using EMBEDDING_BATCH_SIZE: ${EMBEDDING_BATCH_SIZE}`);
 
         let chunkBuffer: Array<{ chunk: CodeChunk; codebasePath: string }> = [];
         let processedFiles = 0;
@@ -882,7 +882,7 @@ export class Context {
                 if (chunks.length > 50) {
                     console.warn(`[Context] Warning: File ${filePath} generated ${chunks.length} chunks (${Math.round(content.length / 1024)}KB}`);
                 } else if (content.length > 100000) {
-                    console.log(`📄 Large file ${filePath}: ${Math.round(content.length / 1024)}KB -> ${chunks.length} chunks`);
+                    console.log(`[Context] Large file ${filePath}: ${Math.round(content.length / 1024)}KB -> ${chunks.length} chunks`);
                 }
 
                 // Add chunks to buffer
@@ -935,7 +935,7 @@ export class Context {
         // Process any remaining chunks in the buffer
         if (chunkBuffer.length > 0) {
             const searchType = isHybrid === true ? 'hybrid' : 'regular';
-            console.log(`📝 Processing final batch of ${chunkBuffer.length} chunks for ${searchType}`);
+            console.log(`[Context] Processing final batch of ${chunkBuffer.length} chunks for ${searchType}`);
             try {
                 await this.processChunkBuffer(chunkBuffer);
             } catch (error) {
@@ -968,7 +968,7 @@ export class Context {
 
         const isHybrid = this.getIsHybrid();
         const searchType = isHybrid === true ? 'hybrid' : 'regular';
-        console.log(`[Context] 🔄 Processing batch of ${chunks.length} chunks (~${estimatedTokens} tokens) for ${searchType}`);
+        console.log(`[Context] Processing batch of ${chunks.length} chunks (~${estimatedTokens} tokens) for ${searchType}`);
         await this.processChunkBatch(chunks, codebasePath);
     }
 
@@ -1144,9 +1144,9 @@ export class Context {
             // Merge file-based patterns with existing patterns (which may include custom MCP patterns)
             if (fileBasedPatterns.length > 0) {
                 this.addCustomIgnorePatterns(fileBasedPatterns);
-                console.log(`[Context] 🚫 Loaded total ${fileBasedPatterns.length} ignore patterns from all ignore files`);
+                console.log(`[Context] Loaded total ${fileBasedPatterns.length} ignore patterns from all ignore files`);
             } else {
-                console.log('📄 No ignore files found, keeping existing patterns');
+                console.log('[Context] No ignore files found, keeping existing patterns');
             }
         } catch (error) {
             console.warn(`[Context] Warning: Failed to load ignore patterns: ${error}`);
@@ -1173,7 +1173,7 @@ export class Context {
             }
 
             if (ignoreFiles.length > 0) {
-                console.log(`📄 Found ignore files: ${ignoreFiles.map(f => path.basename(f)).join(', ')}`);
+                console.log(`[Context] Found ignore files: ${ignoreFiles.map(f => path.basename(f)).join(', ')}`);
             }
 
             return ignoreFiles;
@@ -1207,20 +1207,20 @@ export class Context {
     private async loadIgnoreFile(filePath: string, fileName: string): Promise<string[]> {
         try {
             await fs.promises.access(filePath);
-            console.log(`📄 Found ${fileName} file at: ${filePath}`);
+            console.log(`[Context] Found ${fileName} file at: ${filePath}`);
 
             const ignorePatterns = await Context.getIgnorePatternsFromFile(filePath);
 
             if (ignorePatterns.length > 0) {
-                console.log(`[Context] 🚫 Loaded ${ignorePatterns.length} ignore patterns from ${fileName}`);
+                console.log(`[Context] Loaded ${ignorePatterns.length} ignore patterns from ${fileName}`);
                 return ignorePatterns;
             } else {
-                console.log(`📄 ${fileName} file found but no valid patterns detected`);
+                console.log(`[Context] ${fileName} file found but no valid patterns detected`);
                 return [];
             }
         } catch (error) {
             if (fileName.includes('global')) {
-                console.log(`📄 No ${fileName} file found`);
+                console.log(`[Context] No ${fileName} file found`);
             }
             return [];
         }
@@ -1355,7 +1355,7 @@ export class Context {
         const mergedExtensions = [...this.supportedExtensions, ...normalizedExtensions];
         const uniqueExtensions: string[] = [...new Set(mergedExtensions)];
         this.supportedExtensions = uniqueExtensions;
-        console.log(`[Context] 📎 Added ${customExtensions.length} custom extensions. Total: ${this.supportedExtensions.length} extensions`);
+        console.log(`[Context] Added ${customExtensions.length} custom extensions. Total: ${this.supportedExtensions.length} extensions`);
     }
 
     /**

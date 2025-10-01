@@ -129,7 +129,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
 
             const loadState = response.data?.loadState;
             if (loadState !== 'LoadStateLoaded') {
-                console.log(`[MilvusRestfulDB] 🔄 Loading collection '${collectionName}' to memory...`);
+                console.log(`[MilvusRestfulDB] Loading collection '${collectionName}' to memory...`);
                 await this.loadCollection(collectionName);
             }
         } catch (error) {
@@ -693,7 +693,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
         try {
             const restfulConfig = this.config as MilvusRestfulConfig;
 
-            console.log(`[MilvusRestfulDB] 🔍 Preparing hybrid search for collection: ${collectionName}`);
+            console.log(`[MilvusRestfulDB] Preparing hybrid search for collection: ${collectionName}`);
 
             // Prepare search requests according to Milvus REST API hybrid search specification
             // For dense vector search - data must be array of vectors: [[0.1, 0.2, 0.3, ...]]
@@ -733,13 +733,13 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
                 }
             };
 
-            console.log(`[MilvusRestfulDB] 🔍 Dense search params:`, JSON.stringify({
+            console.log(`[MilvusRestfulDB] Dense search params:`, JSON.stringify({
                 annsField: search_param_1.annsField,
                 limit: search_param_1.limit,
                 data_length: Array.isArray(search_param_1.data[0]) ? search_param_1.data[0].length : 'N/A',
                 searchParams: search_param_1.searchParams
             }, null, 2));
-            console.log(`[MilvusRestfulDB] 🔍 Sparse search params:`, JSON.stringify({
+            console.log(`[MilvusRestfulDB] Sparse search params:`, JSON.stringify({
                 annsField: search_param_2.annsField,
                 limit: search_param_2.limit,
                 query_text: typeof search_param_2.data[0] === 'string' ? search_param_2.data[0].substring(0, 50) + '...' : 'N/A',
@@ -755,7 +755,7 @@ export class MilvusRestfulVectorDatabase implements VectorDatabase {
                 outputFields: ['id', 'content', 'relativePath', 'startLine', 'endLine', 'fileExtension', 'metadata'],
             };
 
-            console.log(`[MilvusRestfulDB] 🔍 Executing REST API hybrid search...`);
+            console.log(`[MilvusRestfulDB] Executing REST API hybrid search...`);
             const response = await this.makeRequest('/entities/hybrid_search', 'POST', hybridSearchRequest);
 
             if (response.code !== 0) {

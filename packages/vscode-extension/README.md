@@ -1,5 +1,22 @@
 # Semantic Code Search VSCode Extension
 
+## ⚠️ COMMUNITY FORK NOTICE
+
+> **THIS IS NOT THE OFFICIAL SEMANTIC CODE SEARCH EXTENSION**
+>
+> This is a **community fork** building upon the excellent work of the original Zilliz team. We have deep respect for the original authors.
+>
+> **🙏 Please support the official version**: The official extension is published by Zilliz on the VS Code Marketplace
+>
+> **About this fork:**
+> - Experimental features and community contributions
+> - Based on Claude Context community fork
+> - Not affiliated with or endorsed by the original Zilliz team
+>
+> **⚠️ For production use, we recommend installing the official extension from the marketplace**
+
+---
+
 [![Visual Studio Marketplace](https://img.shields.io/visual-studio-marketplace/v/zilliz.semanticcodesearch?label=VS%20Code%20Marketplace&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=zilliz.semanticcodesearch)
 
 A code indexing and semantic search VSCode extension powered by [Claude Context](https://github.com/zilliztech/claude-context).

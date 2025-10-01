@@ -1,4 +1,22 @@
 # @ayaka209/claude-context-core
+
+## ⚠️ COMMUNITY FORK NOTICE
+
+> **THIS IS NOT THE OFFICIAL CLAUDE CONTEXT PACKAGE**
+>
+> This is a **community fork** building upon the excellent work of the original Zilliz team. We have deep respect for the original authors.
+>
+> **🙏 Please support the official version first**: [@zilliz/code-context-core](https://www.npmjs.com/package/@zilliz/code-context-core)
+>
+> **About this fork:**
+> - Published under `@ayaka209/*` namespace to avoid conflicts
+> - Experimental features and community contributions
+> - Not affiliated with or endorsed by the original Zilliz team
+>
+> **⚠️ For production use, we recommend the official package**
+
+---
+
 ![](../../assets/claude-context.png)
 
 The core indexing engine for Claude Context - a powerful tool for semantic search and analysis of codebases using vector embeddings and AI.

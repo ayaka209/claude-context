@@ -638,6 +638,8 @@ npm run manual-query:interactive
 - `info <collection>` - Check collection status
 - `query <collection> [filter]` - Query with optional filter
 - `search <collection> <query>` - Hybrid search
+- `drop <collection>` - Drop/delete a collection (requires confirmation)
+- `reindex <project-path>` - Re-index a project (clears and rebuilds)
 - `limit <number>` - Set result limit
 - `status` - Show current settings
 - `help` - Show available commands

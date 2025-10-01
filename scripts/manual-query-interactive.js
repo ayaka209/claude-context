@@ -14,6 +14,7 @@ console.log('📦 Loading Claude Context core package...');
 const { Context } = require('../packages/core/dist/index.js');
 const { MilvusVectorDatabase } = require('../packages/core/dist/vectordb/milvus-vectordb.js');
 const { OpenAIEmbedding } = require('../packages/core/dist/embedding/openai-embedding.js');
+const fs = require('fs');
 
 // Global state
 let context = null;
@@ -115,6 +116,10 @@ ${colorize('Query Operations:', 'yellow')}
   ${colorize('search <collection> <query>', 'green')}   - Hybrid search in collection
   ${colorize('find <collection> <query>', 'green')}     - Alias for 'search'
 
+${colorize('Management Operations:', 'yellow')}
+  ${colorize('drop <collection>', 'green')}             - Drop/delete a collection (⚠️  DANGEROUS)
+  ${colorize('reindex <project-path>', 'green')}        - Re-index a project (clears and rebuilds)
+
 ${colorize('Utility Commands:', 'yellow')}
   ${colorize('limit <number>', 'green')}                - Set result limit (default: 10)
   ${colorize('status', 'green')}                        - Show current settings
@@ -129,6 +134,8 @@ ${colorize('Examples:', 'yellow')}
   ${colorize('> query hybrid_code_chunks_abc123 relativePath like "src/%"', 'blue')}
   ${colorize('> search hybrid_code_chunks_abc123 function definition', 'blue')}
   ${colorize('> find hybrid_code_chunks_abc123 error handling', 'blue')}
+  ${colorize('> drop hybrid_code_chunks_abc123', 'blue')}
+  ${colorize('> reindex /path/to/project', 'blue')}
     `);
 }
 
@@ -294,6 +301,116 @@ function clearScreen() {
     showWelcome();
 }
 
+async function handleDrop(collection) {
+    if (!collection) {
+        console.error(colorize('❌ Usage: drop <collection_name>', 'red'));
+        return;
+    }
+
+    try {
+        // Check if collection exists
+        console.log(colorize(`🔍 Checking if collection '${collection}' exists...`, 'blue'));
+        const exists = await vectorDatabase.hasCollection(collection);
+
+        if (!exists) {
+            console.log(colorize(`❌ Collection '${collection}' does not exist`, 'red'));
+            return;
+        }
+
+        // Confirm before dropping
+        return new Promise((resolve) => {
+            rl.question(colorize(`⚠️  Are you sure you want to DROP collection '${collection}'? This cannot be undone! (yes/NO): `, 'yellow'), async (answer) => {
+                if (answer.toLowerCase() === 'yes') {
+                    try {
+                        console.log(colorize(`🗑️  Dropping collection '${collection}'...`, 'blue'));
+                        await vectorDatabase.dropCollection(collection);
+                        console.log(colorize(`✅ Successfully dropped collection '${collection}'`, 'green'));
+                    } catch (error) {
+                        console.error(colorize(`❌ Error dropping collection: ${error.message}`, 'red'));
+                    }
+                } else {
+                    console.log(colorize('ℹ️  Operation cancelled', 'yellow'));
+                }
+                resolve();
+            });
+        });
+    } catch (error) {
+        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+    }
+}
+
+async function handleReindex(projectPath) {
+    if (!projectPath) {
+        console.error(colorize('❌ Usage: reindex <project_path>', 'red'));
+        return;
+    }
+
+    try {
+        // Validate project path
+        const resolvedPath = path.resolve(projectPath);
+        if (!fs.existsSync(resolvedPath)) {
+            console.error(colorize(`❌ Error: Project path does not exist: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        if (!fs.statSync(resolvedPath).isDirectory()) {
+            console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+            return;
+        }
+
+        console.log(colorize(`📂 Project path: ${resolvedPath}`, 'blue'));
+
+        // Get the collection name that would be used for this project
+        const collectionName = context.getCollectionName(resolvedPath);
+        console.log(colorize(`🗄️  Collection name: ${collectionName}`, 'blue'));
+
+        // Check if collection exists
+        const exists = await vectorDatabase.hasCollection(collectionName);
+        if (exists) {
+            console.log(colorize(`⚠️  Collection '${collectionName}' already exists and will be cleared`, 'yellow'));
+        }
+
+        // Confirm before re-indexing
+        return new Promise((resolve) => {
+            rl.question(colorize(`Re-index project '${path.basename(resolvedPath)}'? This will clear existing data. (yes/NO): `, 'yellow'), async (answer) => {
+                if (answer.toLowerCase() === 'yes') {
+                    try {
+                        console.log(colorize('\n🚀 Starting re-indexing process...', 'bright'));
+                        console.log(colorize('This may take several minutes depending on project size.\n', 'yellow'));
+
+                        // Clear existing index
+                        if (exists) {
+                            console.log(colorize(`🗑️  Clearing existing collection '${collectionName}'...`, 'blue'));
+                            await context.clearIndex(resolvedPath);
+                            console.log(colorize('✅ Existing index cleared', 'green'));
+                        }
+
+                        // Re-index the project
+                        console.log(colorize(`📊 Indexing project: ${resolvedPath}`, 'blue'));
+                        const startTime = Date.now();
+
+                        await context.indexCodebase(resolvedPath);
+
+                        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                        console.log(colorize(`\n✅ Re-indexing completed successfully in ${duration}s!`, 'green'));
+                        console.log(colorize(`📦 Collection: ${collectionName}`, 'cyan'));
+                    } catch (error) {
+                        console.error(colorize(`\n❌ Error during re-indexing: ${error.message}`, 'red'));
+                        if (error.stack) {
+                            console.error(colorize(`Stack trace: ${error.stack}`, 'red'));
+                        }
+                    }
+                } else {
+                    console.log(colorize('ℹ️  Operation cancelled', 'yellow'));
+                }
+                resolve();
+            });
+        });
+    } catch (error) {
+        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+    }
+}
+
 async function processCommand(input) {
     const parts = input.trim().split(/\s+/);
     const command = parts[0].toLowerCase();
@@ -349,6 +466,14 @@ async function processCommand(input) {
         case 'search':
         case 'find':
             await handleSearch(args[0], args.slice(1).join(' '));
+            break;
+
+        case 'drop':
+            await handleDrop(args[0]);
+            break;
+
+        case 'reindex':
+            await handleReindex(args.slice(0).join(' '));
             break;
 
         default:

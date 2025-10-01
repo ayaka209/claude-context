@@ -179,6 +179,74 @@ function processInput(data: string): Result {
     ...
 ```
 
+### Management Operations
+
+#### `drop <collection>`
+Drop (delete) a collection from the vector database. ⚠️ **DANGEROUS** - This operation cannot be undone!
+
+**Example:**
+
+```
+claude-context> drop hybrid_code_chunks_abc123
+🔍 Checking if collection 'hybrid_code_chunks_abc123' exists...
+⚠️  Are you sure you want to DROP collection 'hybrid_code_chunks_abc123'? This cannot be undone! (yes/NO): yes
+🗑️  Dropping collection 'hybrid_code_chunks_abc123'...
+✅ Successfully dropped collection 'hybrid_code_chunks_abc123'
+```
+
+**Safety Features:**
+- Checks if collection exists before attempting to drop
+- Requires explicit confirmation (type "yes")
+- Any other input (including just Enter) cancels the operation
+- Clear warning messages about irreversibility
+
+**Use Cases:**
+- Removing obsolete project indexes
+- Cleaning up after testing
+- Freeing up database space
+
+#### `reindex <project-path>`
+Re-index a project by clearing its existing collection and rebuilding from scratch.
+
+**Example:**
+
+```
+claude-context> reindex D:\projects\my-app
+📂 Project path: D:\projects\my-app
+🗄️  Collection name: hybrid_code_chunks_abc123
+⚠️  Collection 'hybrid_code_chunks_abc123' already exists and will be cleared
+Re-index project 'my-app'? This will clear existing data. (yes/NO): yes
+
+🚀 Starting re-indexing process...
+This may take several minutes depending on project size.
+
+🗑️  Clearing existing collection 'hybrid_code_chunks_abc123'...
+✅ Existing index cleared
+📊 Indexing project: D:\projects\my-app
+[Context] 📊 Total chunks: 1234
+[Context] 🔄 Processing batch 1/25...
+[Context] 🔄 Processing batch 2/25...
+...
+
+✅ Re-indexing completed successfully in 45.32s!
+📦 Collection: hybrid_code_chunks_abc123
+```
+
+**Features:**
+- Validates project path exists and is a directory
+- Shows the collection name before proceeding
+- Warns if collection already exists
+- Requires explicit confirmation
+- Clears existing data before re-indexing
+- Shows real-time progress during indexing
+- Reports total time and final collection name
+
+**Use Cases:**
+- Updating index after major code changes
+- Fixing corrupted or incomplete indexes
+- Changing embedding model or dimensions
+- Troubleshooting indexing issues
+
 ### Utility Commands
 
 #### `limit <number>`
@@ -230,7 +298,27 @@ Query Operations:
   query <collection> [filter]   - Query collection with optional filter
   search <collection> <query>   - Hybrid search in collection
   find <collection> <query>     - Alias for 'search'
-...
+
+Management Operations:
+  drop <collection>             - Drop/delete a collection (⚠️  DANGEROUS)
+  reindex <project-path>        - Re-index a project (clears and rebuilds)
+
+Utility Commands:
+  limit <number>                - Set result limit (default: 10)
+  status                        - Show current settings
+  clear                         - Clear screen
+  help                          - Show this help
+  exit or quit                  - Exit the tool
+
+Examples:
+  > list
+  > info hybrid_code_chunks_abc123
+  > limit 20
+  > query hybrid_code_chunks_abc123 relativePath like "src/%"
+  > search hybrid_code_chunks_abc123 function definition
+  > find hybrid_code_chunks_abc123 error handling
+  > drop hybrid_code_chunks_abc123
+  > reindex /path/to/project
 ```
 
 #### `exit` or `quit` or `q`

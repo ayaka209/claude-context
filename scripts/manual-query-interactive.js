@@ -6,11 +6,11 @@ const readline = require('readline');
 
 // Load environment configuration
 const envPath = path.join(__dirname, '..', '.env');
-console.log(`📄 Using configuration file: ${envPath}`);
+console.log(`Using configuration file: ${envPath}`);
 dotenv.config({ path: envPath });
 
 // Load Claude Context core package
-console.log('📦 Loading Claude Context core package...');
+console.log('Loading Claude Context core package...');
 const { Context } = require('../packages/core/dist/index.js');
 const { MilvusVectorDatabase } = require('../packages/core/dist/vectordb/milvus-vectordb.js');
 const { OpenAIEmbedding } = require('../packages/core/dist/embedding/openai-embedding.js');
@@ -60,8 +60,8 @@ async function validateEnvironment() {
         throw new Error('Missing ZILLIZ_TOKEN or MILVUS_TOKEN environment variable');
     }
 
-    console.log(`🔗 Vector DB Endpoint: ${colorize(milvusEndpoint, 'blue')}`);
-    console.log(`🔑 Token: Set (${colorize(milvusToken.substring(0, 10) + '...', 'yellow')})`);
+    console.log(`Vector DB Endpoint: ${colorize(milvusEndpoint, 'blue')}`);
+    console.log(`Token: Set (${colorize(milvusToken.substring(0, 10) + '...', 'yellow')})`);
 }
 
 async function initializeComponents() {
@@ -88,13 +88,13 @@ async function initializeComponents() {
         vectorDatabase
     });
 
-    console.log(colorize('✅ Components initialized successfully!', 'green'));
+    console.log(colorize('Components initialized successfully!', 'green'));
 }
 
 function showWelcome() {
     console.log(`
 ${colorize('═══════════════════════════════════════════════════════════════', 'cyan')}
-${colorize('🔧 Claude Context - Interactive Vector Database Query Tool', 'bright')}
+${colorize('Claude Context - Interactive Vector Database Query Tool', 'bright')}
 ${colorize('═══════════════════════════════════════════════════════════════', 'cyan')}
 
 Welcome to the interactive query interface! Type ${colorize('help', 'yellow')} for available commands.
@@ -118,7 +118,7 @@ ${colorize('Query Operations:', 'yellow')}
   ${colorize('find <collection> <query>', 'green')}     - Alias for 'search'
 
 ${colorize('Management Operations:', 'yellow')}
-  ${colorize('drop <collection>', 'green')}             - Drop/delete a collection (⚠️  DANGEROUS)
+  ${colorize('drop <collection>', 'green')}             - Drop/delete a collection (DANGEROUS)
   ${colorize('clearindex <project-path>', 'green')}     - Clear project index (collection + cache)
   ${colorize('reindex <project-path>', 'green')}        - Re-index a project (clears and rebuilds)
   ${colorize('project <project-path>', 'green')}        - Show project metadata (.context/project.json)
@@ -164,40 +164,40 @@ ${colorize('────────────────', 'cyan')}
 
 function handleCd(projectPath) {
     if (!projectPath) {
-        console.error(colorize('❌ Usage: cd <project_path>', 'red'));
+        console.error(colorize('Usage: cd <project_path>', 'red'));
         return;
     }
 
     const resolvedPath = path.resolve(projectPath);
     if (!fs.existsSync(resolvedPath)) {
-        console.error(colorize(`❌ Error: Path does not exist: ${resolvedPath}`, 'red'));
+        console.error(colorize(`Error: Path does not exist: ${resolvedPath}`, 'red'));
         return;
     }
 
     if (!fs.statSync(resolvedPath).isDirectory()) {
-        console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+        console.error(colorize(`Error: Path is not a directory: ${resolvedPath}`, 'red'));
         return;
     }
 
     workingDirectory = resolvedPath;
-    console.log(colorize(`✅ Working directory set to: ${workingDirectory}`, 'green'));
+    console.log(colorize(`Working directory set to: ${workingDirectory}`, 'green'));
 }
 
 function handlePwd() {
     if (workingDirectory) {
-        console.log(colorize(`📂 Current working directory: ${workingDirectory}`, 'blue'));
+        console.log(colorize(`Current working directory: ${workingDirectory}`, 'blue'));
     } else {
-        console.log(colorize('ℹ️  No working directory set. Use "cd <path>" to set one.', 'yellow'));
+        console.log(colorize('No working directory set. Use "cd <path>" to set one.', 'yellow'));
     }
 }
 
 async function handleList() {
     try {
-        console.log(colorize('📋 Listing collections...', 'blue'));
+        console.log(colorize('Listing collections...', 'blue'));
         const collections = await vectorDatabase.listCollections();
 
         if (collections.length === 0) {
-            console.log(colorize('ℹ️  No collections found', 'yellow'));
+            console.log(colorize('No collections found', 'yellow'));
             return;
         }
 
@@ -207,47 +207,47 @@ async function handleList() {
         });
         console.log();
     } catch (error) {
-        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+        console.error(colorize(`Error: ${error.message}`, 'red'));
     }
 }
 
 async function handleInfo(collection) {
     if (!collection) {
-        console.error(colorize('❌ Usage: info <collection_name>', 'red'));
+        console.error(colorize('Usage: info <collection_name>', 'red'));
         return;
     }
 
     try {
-        console.log(colorize(`ℹ️  Checking collection: ${collection}`, 'blue'));
+        console.log(colorize(`Checking collection: ${collection}`, 'blue'));
         const exists = await vectorDatabase.hasCollection(collection);
 
         if (exists) {
-            console.log(colorize(`✅ Collection '${collection}' exists and is accessible`, 'green'));
+            console.log(colorize(`Collection '${collection}' exists and is accessible`, 'green'));
         } else {
-            console.log(colorize(`❌ Collection '${collection}' does not exist`, 'red'));
+            console.log(colorize(`Collection '${collection}' does not exist`, 'red'));
         }
     } catch (error) {
-        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+        console.error(colorize(`Error: ${error.message}`, 'red'));
     }
 }
 
 async function handleQuery(collection, filter = '') {
     if (!collection) {
-        console.error(colorize('❌ Usage: query <collection_name> [filter_expression]', 'red'));
+        console.error(colorize('Usage: query <collection_name> [filter_expression]', 'red'));
         return;
     }
 
     try {
         console.log(colorize(`🔍 Querying collection: ${collection}`, 'blue'));
         if (filter) {
-            console.log(colorize(`🎯 Filter: ${filter}`, 'blue'));
+            console.log(colorize(`Filter: ${filter}`, 'blue'));
         }
-        console.log(colorize(`📊 Limit: ${settings.limit}`, 'blue'));
+        console.log(colorize(`Limit: ${settings.limit}`, 'blue'));
 
         const outputFields = ['id', 'content', 'relativePath', 'startLine', 'endLine', 'fileExtension', 'metadata'];
         const results = await vectorDatabase.query(collection, filter, outputFields, settings.limit);
 
-        console.log(`\n${colorize(`✅ Found ${results.length} results:`, 'green')}`);
+        console.log(`\n${colorize(`Found ${results.length} results:`, 'green')}`);
         results.forEach((result, index) => {
             console.log(`\n${colorize(`--- Result ${index + 1} ---`, 'cyan')}`);
             console.log(`${colorize('ID:', 'yellow')} ${result.id}`);
@@ -258,29 +258,29 @@ async function handleQuery(collection, filter = '') {
         });
         console.log();
     } catch (error) {
-        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+        console.error(colorize(`Error: ${error.message}`, 'red'));
     }
 }
 
 async function handleSearch(collection, query) {
     if (!collection || !query) {
-        console.error(colorize('❌ Usage: search <collection_name> <query_text>', 'red'));
+        console.error(colorize('Usage: search <collection_name> <query_text>', 'red'));
         return;
     }
 
     if (!process.env.OPENAI_API_KEY) {
-        console.error(colorize('❌ OPENAI_API_KEY is required for hybrid search', 'red'));
+        console.error(colorize('OPENAI_API_KEY is required for hybrid search', 'red'));
         return;
     }
 
     try {
-        console.log(colorize(`🔎 Performing hybrid search on: ${collection}`, 'blue'));
-        console.log(colorize(`🎯 Query: "${query}"`, 'blue'));
-        console.log(colorize(`📊 Limit: ${settings.limit}`, 'blue'));
+        console.log(colorize(`Performing hybrid search on: ${collection}`, 'blue'));
+        console.log(colorize(`Query: "${query}"`, 'blue'));
+        console.log(colorize(`Limit: ${settings.limit}`, 'blue'));
 
         // Get embedding for the query
         const queryEmbedding = await embedding.embed(query);
-        console.log(colorize(`✅ Generated ${queryEmbedding.dimension}D query vector`, 'green'));
+        console.log(colorize(`Generated ${queryEmbedding.dimension}D query vector`, 'green'));
 
         // Prepare hybrid search requests
         const searchRequests = [
@@ -307,7 +307,7 @@ async function handleSearch(collection, query) {
             }
         );
 
-        console.log(`\n${colorize(`✅ Found ${results.length} hybrid search results:`, 'green')}`);
+        console.log(`\n${colorize(`Found ${results.length} hybrid search results:`, 'green')}`);
         results.forEach((result, index) => {
             console.log(`\n${colorize(`--- Result ${index + 1} (Score: ${result.score.toFixed(4)}) ---`, 'cyan')}`);
             console.log(`${colorize('ID:', 'yellow')} ${result.document.id}`);
@@ -318,19 +318,19 @@ async function handleSearch(collection, query) {
         });
         console.log();
     } catch (error) {
-        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+        console.error(colorize(`Error: ${error.message}`, 'red'));
     }
 }
 
 function handleLimit(limit) {
     const num = parseInt(limit);
     if (isNaN(num) || num <= 0 || num > 100) {
-        console.error(colorize('❌ Limit must be a number between 1 and 100', 'red'));
+        console.error(colorize('Limit must be a number between 1 and 100', 'red'));
         return;
     }
 
     settings.limit = num;
-    console.log(colorize(`✅ Result limit set to ${num}`, 'green'));
+    console.log(colorize(`Result limit set to ${num}`, 'green'));
 }
 
 function clearScreen() {
@@ -340,7 +340,7 @@ function clearScreen() {
 
 async function handleDrop(collection) {
     if (!collection) {
-        console.error(colorize('❌ Usage: drop <collection_name>', 'red'));
+        console.error(colorize('Usage: drop <collection_name>', 'red'));
         return;
     }
 
@@ -350,29 +350,29 @@ async function handleDrop(collection) {
         const exists = await vectorDatabase.hasCollection(collection);
 
         if (!exists) {
-            console.log(colorize(`❌ Collection '${collection}' does not exist`, 'red'));
+            console.log(colorize(`Collection '${collection}' does not exist`, 'red'));
             return;
         }
 
         // Confirm before dropping
         return new Promise((resolve) => {
-            rl.question(colorize(`⚠️  Are you sure you want to DROP collection '${collection}'? This cannot be undone! (yes/NO): `, 'yellow'), async (answer) => {
+            rl.question(colorize(`Are you sure you want to DROP collection '${collection}'? This cannot be undone! (yes/NO): `, 'yellow'), async (answer) => {
                 if (answer.toLowerCase() === 'yes') {
                     try {
-                        console.log(colorize(`🗑️  Dropping collection '${collection}'...`, 'blue'));
+                        console.log(colorize(`Dropping collection '${collection}'...`, 'blue'));
                         await vectorDatabase.dropCollection(collection);
-                        console.log(colorize(`✅ Successfully dropped collection '${collection}'`, 'green'));
+                        console.log(colorize(`Successfully dropped collection '${collection}'`, 'green'));
                     } catch (error) {
-                        console.error(colorize(`❌ Error dropping collection: ${error.message}`, 'red'));
+                        console.error(colorize(`Error dropping collection: ${error.message}`, 'red'));
                     }
                 } else {
-                    console.log(colorize('ℹ️  Operation cancelled', 'yellow'));
+                    console.log(colorize('Operation cancelled', 'yellow'));
                 }
                 resolve();
             });
         });
     } catch (error) {
-        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+        console.error(colorize(`Error: ${error.message}`, 'red'));
     }
 }
 
@@ -380,7 +380,7 @@ async function handleProject(projectPath) {
     // Use working directory if no path provided
     if (!projectPath) {
         if (!workingDirectory) {
-            console.error(colorize('❌ Usage: project <project_path>', 'red'));
+            console.error(colorize('Usage: project <project_path>', 'red'));
             console.error(colorize('   Or set working directory first with: cd <project_path>', 'yellow'));
             return;
         }
@@ -391,19 +391,19 @@ async function handleProject(projectPath) {
         // Validate project path
         const resolvedPath = path.resolve(projectPath);
         if (!fs.existsSync(resolvedPath)) {
-            console.error(colorize(`❌ Error: Project path does not exist: ${resolvedPath}`, 'red'));
+            console.error(colorize(`Error: Project path does not exist: ${resolvedPath}`, 'red'));
             return;
         }
 
         if (!fs.statSync(resolvedPath).isDirectory()) {
-            console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+            console.error(colorize(`Error: Path is not a directory: ${resolvedPath}`, 'red'));
             return;
         }
 
         // Check for .context/project.json
         const projectJsonPath = path.join(resolvedPath, '.context', 'project.json');
         if (!fs.existsSync(projectJsonPath)) {
-            console.log(colorize(`\n⚠️  No project metadata found at: ${projectJsonPath}`, 'yellow'));
+            console.log(colorize(`\nNo project metadata found at: ${projectJsonPath}`, 'yellow'));
             console.log(colorize('This project has not been indexed yet.', 'yellow'));
             console.log(colorize(`\nTo index this project, use: ${colorize('reindex ' + projectPath, 'cyan')}`, 'blue'));
             return;
@@ -414,7 +414,7 @@ async function handleProject(projectPath) {
 
         // Display project metadata
         console.log(`\n${colorize('═══════════════════════════════════════════', 'cyan')}`);
-        console.log(colorize('📦 Project Metadata', 'bright'));
+        console.log(colorize('Project Metadata', 'bright'));
         console.log(colorize('═══════════════════════════════════════════', 'cyan'));
         console.log();
 
@@ -456,9 +456,9 @@ async function handleProject(projectPath) {
         const exists = await vectorDatabase.hasCollection(projectData.collectionName);
         console.log(colorize('Collection Status:', 'yellow'));
         if (exists) {
-            console.log(`  ${colorize('✅ Collection exists in vector database', 'green')}`);
+            console.log(`  ${colorize('Collection exists in vector database', 'green')}`);
         } else {
-            console.log(`  ${colorize('⚠️  Collection not found in vector database', 'red')}`);
+            console.log(`  ${colorize('Collection not found in vector database', 'red')}`);
             console.log(`  ${colorize('The metadata exists but the collection may have been deleted.', 'yellow')}`);
         }
         console.log();
@@ -479,7 +479,7 @@ async function handleProject(projectPath) {
 
             if (gitStatus) {
                 console.log(colorize('Git Tracking:', 'yellow'));
-                console.log(`  ${colorize('✅ project.json is tracked in git (recommended for team collaboration)', 'green')}`);
+                console.log(`  ${colorize('project.json is tracked in git (recommended for team collaboration)', 'green')}`);
                 console.log();
             }
         } catch (gitError) {
@@ -490,9 +490,9 @@ async function handleProject(projectPath) {
 
                 // It's a git repo but file is not tracked
                 console.log(colorize('Git Tracking:', 'yellow'));
-                console.log(`  ${colorize('⚠️  project.json is NOT tracked in git', 'red')}`);
+                console.log(`  ${colorize('project.json is NOT tracked in git', 'red')}`);
                 console.log();
-                console.log(colorize('💡 Recommendation:', 'bright'));
+                console.log(colorize('Recommendation:', 'bright'));
                 console.log(`  ${colorize('Consider committing .context/project.json to git for team collaboration.', 'yellow')}`);
                 console.log(`  ${colorize('This ensures all team members use the same collection name.', 'yellow')}`);
                 console.log();
@@ -506,7 +506,7 @@ async function handleProject(projectPath) {
         }
 
     } catch (error) {
-        console.error(colorize(`❌ Error reading project metadata: ${error.message}`, 'red'));
+        console.error(colorize(`Error reading project metadata: ${error.message}`, 'red'));
     }
 }
 
@@ -514,7 +514,7 @@ async function handleClearIndex(projectPath) {
     // Use working directory if no path provided
     if (!projectPath) {
         if (!workingDirectory) {
-            console.error(colorize('❌ Usage: clearindex <project_path>', 'red'));
+            console.error(colorize('Usage: clearindex <project_path>', 'red'));
             console.error(colorize('   Or set working directory first with: cd <project_path>', 'yellow'));
             return;
         }
@@ -525,40 +525,40 @@ async function handleClearIndex(projectPath) {
         // Validate project path
         const resolvedPath = path.resolve(projectPath);
         if (!fs.existsSync(resolvedPath)) {
-            console.error(colorize(`❌ Error: Project path does not exist: ${resolvedPath}`, 'red'));
+            console.error(colorize(`Error: Project path does not exist: ${resolvedPath}`, 'red'));
             return;
         }
 
         if (!fs.statSync(resolvedPath).isDirectory()) {
-            console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+            console.error(colorize(`Error: Path is not a directory: ${resolvedPath}`, 'red'));
             return;
         }
 
-        console.log(colorize(`📂 Project path: ${resolvedPath}`, 'blue'));
+        console.log(colorize(`Project path: ${resolvedPath}`, 'blue'));
 
         // Get the collection name that would be used for this project
         const collectionName = context.getCollectionName(resolvedPath);
-        console.log(colorize(`🗄️  Collection name: ${collectionName}`, 'blue'));
+        console.log(colorize(`Collection name: ${collectionName}`, 'blue'));
 
         // Check if collection exists
         const exists = await vectorDatabase.hasCollection(collectionName);
         if (!exists) {
-            console.log(colorize(`⚠️  Collection '${collectionName}' does not exist`, 'yellow'));
+            console.log(colorize(`Collection '${collectionName}' does not exist`, 'yellow'));
             console.log(colorize('Nothing to clear. Project may not have been indexed yet.', 'yellow'));
             return;
         }
 
         // Confirm before clearing
         return new Promise((resolve) => {
-            rl.question(colorize(`⚠️  Are you sure you want to CLEAR the index for '${path.basename(resolvedPath)}'? This will delete all indexed data. (yes/NO): `, 'yellow'), async (answer) => {
+            rl.question(colorize(`Are you sure you want to CLEAR the index for '${path.basename(resolvedPath)}'? This will delete all indexed data. (yes/NO): `, 'yellow'), async (answer) => {
                 if (answer.toLowerCase() === 'yes') {
                     try {
-                        console.log(colorize('\n🗑️  Starting index cleanup...', 'bright'));
+                        console.log(colorize('\nStarting index cleanup...', 'bright'));
 
                         // Clear the index (drops collection, clears cache, clears metadata)
                         await context.clearIndex(resolvedPath);
 
-                        console.log(colorize('\n✅ Index cleared successfully!', 'green'));
+                        console.log(colorize('\nIndex cleared successfully!', 'green'));
                         console.log(colorize('The following have been removed:', 'cyan'));
                         console.log(colorize(`  - Vector database collection: ${collectionName}`, 'cyan'));
                         console.log(colorize(`  - Project metadata: .context/project.json`, 'cyan'));
@@ -568,19 +568,19 @@ async function handleClearIndex(projectPath) {
                         console.log(colorize('To re-index this project, use:', 'blue'));
                         console.log(colorize(`  reindex ${projectPath}`, 'cyan'));
                     } catch (error) {
-                        console.error(colorize(`\n❌ Error during index cleanup: ${error.message}`, 'red'));
+                        console.error(colorize(`\nError during index cleanup: ${error.message}`, 'red'));
                         if (error.stack) {
                             console.error(colorize(`Stack trace: ${error.stack}`, 'red'));
                         }
                     }
                 } else {
-                    console.log(colorize('ℹ️  Operation cancelled', 'yellow'));
+                    console.log(colorize('Operation cancelled', 'yellow'));
                 }
                 resolve();
             });
         });
     } catch (error) {
-        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+        console.error(colorize(`Error: ${error.message}`, 'red'));
     }
 }
 
@@ -588,7 +588,7 @@ async function handleReindex(projectPath) {
     // Use working directory if no path provided
     if (!projectPath) {
         if (!workingDirectory) {
-            console.error(colorize('❌ Usage: reindex <project_path>', 'red'));
+            console.error(colorize('Usage: reindex <project_path>', 'red'));
             console.error(colorize('   Or set working directory first with: cd <project_path>', 'yellow'));
             return;
         }
@@ -599,25 +599,25 @@ async function handleReindex(projectPath) {
         // Validate project path
         const resolvedPath = path.resolve(projectPath);
         if (!fs.existsSync(resolvedPath)) {
-            console.error(colorize(`❌ Error: Project path does not exist: ${resolvedPath}`, 'red'));
+            console.error(colorize(`Error: Project path does not exist: ${resolvedPath}`, 'red'));
             return;
         }
 
         if (!fs.statSync(resolvedPath).isDirectory()) {
-            console.error(colorize(`❌ Error: Path is not a directory: ${resolvedPath}`, 'red'));
+            console.error(colorize(`Error: Path is not a directory: ${resolvedPath}`, 'red'));
             return;
         }
 
-        console.log(colorize(`📂 Project path: ${resolvedPath}`, 'blue'));
+        console.log(colorize(`Project path: ${resolvedPath}`, 'blue'));
 
         // Get the collection name that would be used for this project
         const collectionName = context.getCollectionName(resolvedPath);
-        console.log(colorize(`🗄️  Collection name: ${collectionName}`, 'blue'));
+        console.log(colorize(`Collection name: ${collectionName}`, 'blue'));
 
         // Check if collection exists
         const exists = await vectorDatabase.hasCollection(collectionName);
         if (exists) {
-            console.log(colorize(`⚠️  Collection '${collectionName}' already exists and will be cleared`, 'yellow'));
+            console.log(colorize(`Collection '${collectionName}' already exists and will be cleared`, 'yellow'));
         }
 
         // Confirm before re-indexing
@@ -630,34 +630,34 @@ async function handleReindex(projectPath) {
 
                         // Clear existing index
                         if (exists) {
-                            console.log(colorize(`🗑️  Clearing existing collection '${collectionName}'...`, 'blue'));
+                            console.log(colorize(`Clearing existing collection '${collectionName}'...`, 'blue'));
                             await context.clearIndex(resolvedPath);
-                            console.log(colorize('✅ Existing index cleared', 'green'));
+                            console.log(colorize('Existing index cleared', 'green'));
                         }
 
                         // Re-index the project
-                        console.log(colorize(`📊 Indexing project: ${resolvedPath}`, 'blue'));
+                        console.log(colorize(`Indexing project: ${resolvedPath}`, 'blue'));
                         const startTime = Date.now();
 
                         await context.indexCodebase(resolvedPath);
 
                         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-                        console.log(colorize(`\n✅ Re-indexing completed successfully in ${duration}s!`, 'green'));
-                        console.log(colorize(`📦 Collection: ${collectionName}`, 'cyan'));
+                        console.log(colorize(`\nRe-indexing completed successfully in ${duration}s!`, 'green'));
+                        console.log(colorize(`Collection: ${collectionName}`, 'cyan'));
                     } catch (error) {
-                        console.error(colorize(`\n❌ Error during re-indexing: ${error.message}`, 'red'));
+                        console.error(colorize(`\nError during re-indexing: ${error.message}`, 'red'));
                         if (error.stack) {
                             console.error(colorize(`Stack trace: ${error.stack}`, 'red'));
                         }
                     }
                 } else {
-                    console.log(colorize('ℹ️  Operation cancelled', 'yellow'));
+                    console.log(colorize('Operation cancelled', 'yellow'));
                 }
                 resolve();
             });
         });
     } catch (error) {
-        console.error(colorize(`❌ Error: ${error.message}`, 'red'));
+        console.error(colorize(`Error: ${error.message}`, 'red'));
     }
 }
 
@@ -679,7 +679,7 @@ async function processCommand(input) {
         case 'exit':
         case 'quit':
         case 'q':
-            console.log(colorize('\n👋 Goodbye!', 'green'));
+            console.log(colorize('\nGoodbye!', 'green'));
             process.exit(0);
             break;
 
@@ -743,7 +743,7 @@ async function processCommand(input) {
             break;
 
         default:
-            console.error(colorize(`❌ Unknown command: ${command}`, 'red'));
+            console.error(colorize(`Unknown command: ${command}`, 'red'));
             console.log(colorize('Type "help" for available commands', 'yellow'));
             break;
     }
@@ -758,7 +758,7 @@ function startInteractiveSession() {
     });
 
     rl.on('close', () => {
-        console.log(colorize('\n👋 Session ended', 'green'));
+        console.log(colorize('\nSession ended', 'green'));
         process.exit(0);
     });
 
@@ -766,7 +766,7 @@ function startInteractiveSession() {
     rl.on('SIGINT', () => {
         rl.question(colorize('\nAre you sure you want to exit? (y/N) ', 'yellow'), (answer) => {
             if (answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes') {
-                console.log(colorize('👋 Goodbye!', 'green'));
+                console.log(colorize('Goodbye!', 'green'));
                 process.exit(0);
             } else {
                 rl.prompt();
@@ -794,7 +794,7 @@ async function main() {
                 // Remove --cwd and its value from args
                 args.splice(cwdIndex, 2);
             } else {
-                console.error(colorize(`❌ Error: Invalid working directory: ${cwdPath}`, 'red'));
+                console.error(colorize(`Error: Invalid working directory: ${cwdPath}`, 'red'));
                 process.exit(1);
             }
         }
@@ -802,7 +802,7 @@ async function main() {
         // Check if running in non-interactive mode (with command arguments)
         if (args.length > 0) {
             // Non-interactive mode: execute command directly
-            console.log(colorize('🔧 Claude Context - Query Tool', 'bright'));
+            console.log(colorize('Claude Context - Query Tool', 'bright'));
             console.log(colorize('═════════════════════════════════════════', 'cyan'));
 
             // Validate environment
@@ -813,7 +813,7 @@ async function main() {
 
             // Show working directory if set
             if (workingDirectory) {
-                console.log(colorize(`📂 Working directory: ${workingDirectory}`, 'blue'));
+                console.log(colorize(`Working directory: ${workingDirectory}`, 'blue'));
             }
 
             // Execute the command
@@ -825,7 +825,7 @@ async function main() {
             process.exit(0);
         } else {
             // Interactive mode
-            console.log(colorize('🔧 Claude Context - Interactive Query Tool', 'bright'));
+            console.log(colorize('Claude Context - Interactive Query Tool', 'bright'));
             console.log(colorize('═════════════════════════════════════════', 'cyan'));
 
             // Validate environment
@@ -836,7 +836,7 @@ async function main() {
 
             // Show working directory if set
             if (workingDirectory) {
-                console.log(colorize(`📂 Working directory: ${workingDirectory}`, 'blue'));
+                console.log(colorize(`Working directory: ${workingDirectory}`, 'blue'));
             }
 
             // Start interactive session
@@ -844,20 +844,20 @@ async function main() {
         }
 
     } catch (error) {
-        console.error(colorize(`\n❌ Initialization Error: ${error.message}`, 'red'));
-        console.error(colorize('💡 Please check your environment configuration', 'yellow'));
+        console.error(colorize(`\nInitialization Error: ${error.message}`, 'red'));
+        console.error(colorize('Please check your environment configuration', 'yellow'));
         process.exit(1);
     }
 }
 
 // Handle unexpected errors
 process.on('uncaughtException', (error) => {
-    console.error(colorize(`\n💥 Uncaught Exception: ${error.message}`, 'red'));
+    console.error(colorize(`\nUncaught Exception: ${error.message}`, 'red'));
     process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error(colorize(`\n💥 Unhandled Rejection at: ${promise}`, 'red'));
+    console.error(colorize(`\nUnhandled Rejection at: ${promise}`, 'red'));
     console.error(colorize(`Reason: ${reason}`, 'red'));
     process.exit(1);
 });

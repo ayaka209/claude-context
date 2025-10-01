@@ -49,6 +49,9 @@ Thumbs.db
 *.tmp
 *.temp
 
+# Claude Context cache (generated in indexed projects)
+.context/
+
 # Extension specific
 *.vsix
 *.crx

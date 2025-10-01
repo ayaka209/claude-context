@@ -649,17 +649,42 @@ function startInteractiveSession() {
 
 async function main() {
     try {
-        console.log(colorize('🔧 Claude Context - Interactive Query Tool', 'bright'));
-        console.log(colorize('═════════════════════════════════════════', 'cyan'));
+        // Parse command-line arguments
+        const args = process.argv.slice(2);
 
-        // Validate environment
-        await validateEnvironment();
+        // Check if running in non-interactive mode (with command arguments)
+        if (args.length > 0) {
+            // Non-interactive mode: execute command directly
+            console.log(colorize('🔧 Claude Context - Query Tool', 'bright'));
+            console.log(colorize('═════════════════════════════════════════', 'cyan'));
 
-        // Initialize components
-        await initializeComponents();
+            // Validate environment
+            await validateEnvironment();
 
-        // Start interactive session
-        startInteractiveSession();
+            // Initialize components
+            await initializeComponents();
+
+            // Execute the command
+            const commandLine = args.join(' ');
+            console.log(colorize(`\nExecuting: ${commandLine}\n`, 'cyan'));
+            await processCommand(commandLine);
+
+            // Exit after command execution
+            process.exit(0);
+        } else {
+            // Interactive mode
+            console.log(colorize('🔧 Claude Context - Interactive Query Tool', 'bright'));
+            console.log(colorize('═════════════════════════════════════════', 'cyan'));
+
+            // Validate environment
+            await validateEnvironment();
+
+            // Initialize components
+            await initializeComponents();
+
+            // Start interactive session
+            startInteractiveSession();
+        }
 
     } catch (error) {
         console.error(colorize(`\n❌ Initialization Error: ${error.message}`, 'red'));

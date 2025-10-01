@@ -631,6 +631,30 @@ For a more user-friendly experience, use the interactive query interface:
 ```bash
 # Start interactive mode with color output and command completion
 npm run manual-query:interactive
+
+# Or use the shorter alias
+npm run query
+```
+
+**Direct Command Mode** (New):
+
+You can also execute commands directly without entering interactive mode:
+
+```bash
+# View project metadata
+npm run query project /path/to/your/project
+
+# Re-index a project
+npm run query reindex /path/to/your/project
+
+# List collections
+npm run query list
+
+# Search in a collection
+npm run query search my_collection "error handling code"
+
+# Drop a collection (with confirmation)
+npm run query drop my_collection
 ```
 
 **Interactive commands:**
@@ -640,6 +664,7 @@ npm run manual-query:interactive
 - `search <collection> <query>` - Hybrid search
 - `drop <collection>` - Drop/delete a collection (requires confirmation)
 - `reindex <project-path>` - Re-index a project (clears and rebuilds)
+- `project <project-path>` - Show project metadata and git tracking status
 - `limit <number>` - Set result limit
 - `status` - Show current settings
 - `help` - Show available commands
@@ -841,13 +866,23 @@ When you commit `.context/project.json`, your team benefits from:
 
 #### Viewing Project Metadata
 
-Use the interactive query tool to inspect project metadata:
+You can inspect project metadata in two ways:
 
+**Interactive Mode:**
 ```bash
 npm run manual-query:interactive
 
 # In the interactive prompt:
 > project /path/to/your/project
+```
+
+**Direct Command Mode:**
+```bash
+# Run command directly without entering interactive mode
+npm run query project /path/to/your/project
+
+# Or use npx for one-off queries
+npx --package=@ayaka209/claude-context-core -- node scripts/manual-query-interactive.js project /path/to/project
 ```
 
 This displays:
@@ -857,6 +892,7 @@ This displays:
 - Creation and last indexed timestamps
 - Git repository identifier (if available)
 - Collection existence status in vector database
+- Git tracking status (warns if project.json is not committed)
 
 #### Manual Cleanup
 

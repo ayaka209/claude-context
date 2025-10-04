@@ -473,17 +473,31 @@ export class ToolHandlers {
             }
 
             // Check if this codebase is indexed or being indexed
-            const isIndexed = this.snapshotManager.getIndexedCodebases().includes(absolutePath);
+            let isIndexed = this.snapshotManager.getIndexedCodebases().includes(absolutePath);
             const isIndexing = this.snapshotManager.getIndexingCodebases().includes(absolutePath);
 
+            // If not in snapshot, check if it was indexed externally (e.g., via interactive tool or scripts)
             if (!isIndexed && !isIndexing) {
-                return {
-                    content: [{
-                        type: "text",
-                        text: `Error: Codebase '${absolutePath}' is not indexed. Please index it first using the index_codebase tool.`
-                    }],
-                    isError: true
-                };
+                console.log(`[SEARCH] Codebase not in snapshot, checking for external index...`);
+                
+                // Check if project.json exists and collection exists in database
+                const hasIndex = await this.context.hasIndex(absolutePath, gitRepoIdentifier);
+                
+                if (hasIndex) {
+                    console.log(`[SEARCH] ✅ Found external index, syncing to snapshot...`);
+                    // Sync the externally indexed codebase to snapshot
+                    this.snapshotManager.addIndexedCodebase(absolutePath);
+                    this.snapshotManager.saveCodebaseSnapshot();
+                    isIndexed = true;
+                } else {
+                    return {
+                        content: [{
+                            type: "text",
+                            text: `Error: Codebase '${absolutePath}' is not indexed. Please index it first using the index_codebase tool.`
+                        }],
+                        isError: true
+                    };
+                }
             }
 
             // Show indexing status if codebase is being indexed
